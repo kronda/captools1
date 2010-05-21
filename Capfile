@@ -43,12 +43,17 @@ namespace :deploy do
     "deploy:create_settings_php",
     "deploy:create_database",
     "deploy:symlink_files",
-    "deploy:restart"
+    "deploy:restart",
+    "deploy:setup_drupal_tasks",
+    "deploy:setup_backup_tasks"
   
   after "deploy:create_vhost",
     "deploy:restart"
     
-  after "deploy", "deploy:symlink_files"
+  after "deploy", 
+    "deploy:symlink_files",
+    "deploy:cacheclear",
+    "deploy:cleanup"
 
   desc "Create settings.php in shared/config"
   task :create_settings_php, :roles => :web do
@@ -81,6 +86,18 @@ EOF
       run "ln -nfs #{deploy_to}/#{shared_dir}/#{domain}/files #{release_path}/#{app_root}/sites/#{domain}/files"
     end
   end
+  
+  namespace :cron do
+    desc "Add in the cron.php tasks"
+    task :setup_drupal_tasks, :roles => :mgt do
+      run "uname -a"
+    end
+  
+    desc "Add in the backup cron tasks"
+    task :setup_backup_tasks, :roles => :mgt do
+      run "uname -a"
+    end
+  end
 
   # desc '[internal] Touches up the released code.'
   task :finalize_update, :except => { :no_release => true } do
@@ -96,7 +113,7 @@ EOF
 
   namespace :web do
     desc "Set Drupal maintainance mode to online."
-    task :enable do
+    task :enable, :roles => :web do
       domains.each do |domain|
         php = 'variable_set("site_offline", FALSE)'
         run "#{drush} --uri=#{domain} php-eval '#{php}'"
@@ -104,16 +121,13 @@ EOF
     end
 
     desc "Set Drupal maintainance mode to off-line."
-    task :disable do
+    task :disable, :roles => :web do
       domains.each do |domain|
         php = 'variable_set("site_offline", TRUE)'
         run "#{drush} --uri=#{domain} php-eval '#{php}'"
       end
     end
   end
-
-  after "deploy", "deploy:cacheclear"
-  after "deploy", "deploy:cleanup"
 
 
   # Each of the following tasks are Rails specific. They're removed.

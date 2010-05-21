@@ -12,5 +12,7 @@ set :gateway, '66.206.88.70'
 role :db, "web12", :primary => true
 role :db, "web13"
 
+role :mgt, "mgt71"
+
 # The path to drush
 set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /var/lib/php/drush/drush.php"
