@@ -41,7 +41,7 @@ namespace :deploy do
   after "deploy:setup", 
     "deploy:create_vhost", 
     "deploy:create_settings_php",
-    "deploy:create_database",
+    "db:create",
     "deploy:symlink_files",
     "deploy:restart",
     "deploy:setup_drupal_tasks",
@@ -65,15 +65,6 @@ EOF
     domains.each do |domain|
       put configuration, "#{deploy_to}/#{shared_dir}/#{domain}/local_settings.php"
     end
-  end
-  
-  desc "Create database"
-  task :create_database, :roles => :db do
-    # Create and gront privs to the new db user
-    create_sql = "create database #{short_name};
-                  grant all on #{short_name}.* to '#{short_name}'@'localhost' identified by '#{db_pass};
-                  flush privileges;'"
-    run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
   end
 
   desc "link file dirs and the local_settings.php to the shared copy"
@@ -162,6 +153,7 @@ namespace :db do
       filename = "#{domain}_#{stage}.sql"
       run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > ~/#{filename}"
       download("~/#{filename}", "db/#{filename}", :via=> :scp)
+      system "cd #{app_root} ; drush --uri=#{domain} sql-cli < ../db/#{filename}"
     end
   end
 
@@ -172,6 +164,15 @@ namespace :db do
       upload("db/#{filename}", "~/#{filename}", :via=> :scp)
       run "#{drush} --uri=#{domain} sql-cli < ~/#{filename}"
     end
+  end
+  
+  desc "Create database"
+  task :create, :roles => :db do
+    # Create and gront privs to the new db user
+    create_sql = "create database #{short_name};
+                  grant all on #{short_name}.* to '#{short_name}'@'localhost' identified by '#{db_pass}';
+                  flush privileges;"
+    run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
   end
 end
 
