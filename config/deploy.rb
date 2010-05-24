@@ -1,12 +1,12 @@
  # The project name.
-set :application, "rnanetworks.com"
+set :application, "8to13.com"
 
 # List the Drupal multi-site folders.  Use "default" if no multi-sites are installed.
 set :domains, ["default"]
 
 # Set the repository type and location to deploy from.
 set :scm, :subversion
-set :repository,  "https://svn.metaltoad.com/svn/rnanetworks/trunk/"
+set :repository,  "https://svn.metaltoad.com/svn/8to13/trunk/"
 set(:scm_password) { Capistrano::CLI.password_prompt("SCM Password: ") }
 
 # Set the database passwords that we'll use for maintenance. Probably only used

@@ -18,7 +18,7 @@ namespace :deploy do
   end
   
   desc "Create the vhost entry for apache"
-  task :create_vhost, :roles => :web do
+  task :create_vhost, :roles => :web, :only => { :stage => :prod } do
     configuration = "
     <VirtualHost *:80>
       ServerName  #{application}
@@ -146,7 +146,7 @@ EOF
   task :stop do
   end
 
-  task :restart do
+  task :restart, :roles => :web, :only => { :stage => :prod } do
     sudo "/usr/sbin/apachectl graceful"
   end
 
@@ -155,37 +155,44 @@ end
 
 ### TODO - The backup / restore tasks are a bit rough...
 
-desc "Download a backup of the database(s) from the given stage."
-task :backup_db, :roles => :db, :only => { :primary => true } do
-  domains.each do |domain|
-    filename = "#{domain}_#{stage}.sql"
-    run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > ~/#{filename}"
-    download("~/#{filename}", "db/#{filename}", :via=> :scp)
-  end
-end
-
-desc "Upload database(s) to the given stage."
-task :restore_db, :roles => :db, :only => { :primary => true } do
-  domains.each do |domain|
-    filename = "#{domain}_#{stage}.sql"
-    upload("db/#{filename}", "~/#{filename}", :via=> :scp)
-    run "#{drush} --uri=#{domain} sql-cli < ~/#{filename}"
-  end
-end
-
-after "restore_db", "deploy:cacheclear"
-
-namespace :files do 
-  desc "Download a backup of the sites/default/files directory from the given stage."
-  task :download, :roles => :web do
+namespace :db do
+  desc "Download a backup of the database(s) from the given stage."
+  task :pull, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
-      download("#{deploy_to}/#{shared_dir}/#{domain}/files", "webroot/sites/#{domain}/files")
+      filename = "#{domain}_#{stage}.sql"
+      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > ~/#{filename}"
+      download("~/#{filename}", "db/#{filename}", :via=> :scp)
+    end
+  end
+
+  desc "Upload database(s) to the given stage."
+  task :push, :roles => :db, :only => { :primary => true } do
+    domains.each do |domain|
+      filename = "#{domain}_#{stage}.sql"
+      upload("db/#{filename}", "~/#{filename}", :via=> :scp)
+      run "#{drush} --uri=#{domain} sql-cli < ~/#{filename}"
     end
   end
 end
 
+after "db:push", "deploy:cacheclear"
+
+namespace :files do 
+  desc "Download a backup of the sites/default/files directory from the given stage."
+  task :pull, :roles => :web do
+    domains.each do |domain|
+      download("#{deploy_to}/#{shared_dir}/#{domain}/files", "webroot/sites/#{domain}/files")
+    end
+  end
+  
+  desc "Push a backup of the sites/default/files directory from the given stage."
+  task :push, :roles => :web do
+    
+  end
+end
+
 def short_name
-  application.gsub('.', '_')
+  application.gsub('.', '_')[0..15]
 end
 
 def random_password(size = 16)
