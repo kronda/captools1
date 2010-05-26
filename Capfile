@@ -1,3 +1,12 @@
+# TODO: Check that files directory links to /var/www/files
+# TODO: Add drupal/backup cron tasks to mgt server
+# TODO: Review db pull/push
+# TODO: Add db download (pull without the auto-restore)
+# TODO: Add file pull/push
+# TODO: Find a way to make create_settings_php and db:create isolatable
+# TODO: Vhost should turn off overrides and create the vhost entry correctly
+# TODO: Add logs command
+
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
 load 'config/deploy.rb'
@@ -24,14 +33,10 @@ namespace :deploy do
       ServerName  #{application}
       ServerAlias www.#{application}
 
-      php_value memory_limit 256M
-
       DocumentRoot #{current_path}/#{app_root}/
       <Directory #{current_path}/#{app_root}/>
         AllowOverride All
         Allow from all
-        php_value magic_quotes_gpc 0
-        AddType application/x-httpd-php .php .html
       </Directory>
     </VirtualHost>"
     
@@ -59,7 +64,7 @@ namespace :deploy do
   task :create_settings_php, :roles => :web do
     configuration = <<-EOF
 <?php
-$db_url = 'mysql://#{short_name}:#{db_pass}@localhost/#{short_name}';
+$db_url = 'mysql://#{short_name}:#{db_pass}@#{f5_db || "localhost"}/#{short_name}';
 $db_prefix = '';
 EOF
     domains.each do |domain|
@@ -167,7 +172,7 @@ namespace :db do
   end
   
   desc "Create database"
-  task :create, :roles => :db do
+  task :create, :roles => :db, :only => { :primary => true } do
     # Create and gront privs to the new db user
     create_sql = "create database #{short_name};
                   grant all on #{short_name}.* to '#{short_name}'@'localhost' identified by '#{db_pass}';
@@ -177,6 +182,27 @@ namespace :db do
 end
 
 after "db:push", "deploy:cacheclear"
+
+namespace :logs do
+  desc "Pull down the apache error logs"
+  task :apache, :roles => :web do
+    domains.each do |domain|
+      
+    end
+  end
+  
+  desc "Pull down the mysql logs"
+  task :mysql, :roles => :db, :only => { :primary => true } do
+    domains.each do |domain|
+      
+    end
+  end
+  
+  desc "Pull down the php error logs"
+  task :php, :roles => :web do
+    
+  end
+end
 
 namespace :files do 
   desc "Download a backup of the sites/default/files directory from the given stage."
