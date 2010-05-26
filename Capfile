@@ -6,6 +6,13 @@
 # TODO: Find a way to make create_settings_php and db:create isolatable
 # TODO: Vhost should turn off overrides and create the vhost entry correctly
 # TODO: Add logs command
+# TODO: Add email settings to vhost
+# TODO: Check vhost file into svn
+# TODO: Add SSL Support
+# TODO: Add VirtualDocumentRoot settings
+# TODO: Document the password used during setup so that we can change that in the stage's deploy recipe
+# TODO: apache restart should try doing a -t before continuing
+# TODO: setup consistent deployment user w/ deploy keys
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
