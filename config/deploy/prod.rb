@@ -13,7 +13,7 @@ role :db, "web12", :primary => true
 role :db, "web13"
 
 # Specify which gateway server to run cron tasks on. For non-sony this should be 70
-role :mgt, "mgt70"
+role :mgt, "mgt71"
 
 # Specify the IP of the F5 pool for the DB
 role :f5_db, 'web12'
