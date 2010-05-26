@@ -13,6 +13,8 @@
 # TODO: Document the password used during setup so that we can change that in the stage's deploy recipe
 # TODO: apache restart should try doing a -t before continuing
 # TODO: setup consistent deployment user w/ deploy keys
+# TODO: chmod ug+rw -R #{app_root} after deploy
+# TODO: add release maintenance, keep 10 copies
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
