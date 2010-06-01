@@ -15,6 +15,9 @@
 # TODO: setup consistent deployment user w/ deploy keys
 # TODO: chmod ug+rw -R #{app_root} after deploy
 # TODO: add release maintenance, keep 10 copies
+# TODO: for prod: disable devel modules, enable css/js/page caches, disable theme auto-rebuild
+# TODO: What's supposed to happen for multi-site deployments?
+# TODO: Setup multisite for create_vhost
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
@@ -53,10 +56,9 @@ namespace :deploy do
   end
   
   after "deploy:setup", 
-    "deploy:create_vhost", 
     "deploy:create_settings_php",
     "db:create",
-    "deploy:symlink_files",
+    "deploy:create_vhost", 
     "deploy:restart",
     "deploy:setup_drupal_tasks",
     "deploy:setup_backup_tasks"
@@ -71,12 +73,12 @@ namespace :deploy do
 
   desc "Create settings.php in shared/config"
   task :create_settings_php, :roles => :web do
-    configuration = <<-EOF
+    domains.each do |domain|
+      configuration = <<-EOF
 <?php
-$db_url = 'mysql://#{short_name}:#{db_pass}@#{f5_db || "localhost"}/#{short_name}';
+$db_url = 'mysql://#{tiny_name(domain)}:#{db_pass}@#{f5_db ||= "localhost"}/#{short_name(domain)}';
 $db_prefix = '';
 EOF
-    domains.each do |domain|
       put configuration, "#{deploy_to}/#{shared_dir}/#{domain}/local_settings.php"
     end
   end
@@ -151,8 +153,7 @@ EOF
   task :stop do
   end
 
-  task :restart, :roles => :web, :only => { :stage => :prod } do
-    sudo "/usr/sbin/apachectl graceful"
+  task :restart, :roles => :web do
   end
 
 end
@@ -183,10 +184,12 @@ namespace :db do
   desc "Create database"
   task :create, :roles => :db, :only => { :primary => true } do
     # Create and gront privs to the new db user
-    create_sql = "create database #{short_name};
-                  grant all on #{short_name}.* to '#{short_name}'@'localhost' identified by '#{db_pass}';
-                  flush privileges;"
-    run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
+    domains.each do |domain|
+      create_sql = "CREATE DATABASE IF NOT EXISTS #{short_name(domain)} ;
+                    GRANT ALL ON #{short_name(domain)}.* TO '#{tiny_name(domain)}'@'localhost' IDENTIFIED BY '#{db_pass}';
+                    FLUSH PRIVILEGES;"
+      run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
+    end
   end
 end
 
@@ -227,8 +230,14 @@ namespace :files do
   end
 end
 
-def short_name
-  application.gsub('.', '_')[0..15]
+def short_name(domain=nil)
+  return "#{application}_#{domain}".gsub('.', '_')[0..63] if domain && domain != 'default'
+  return application.gsub('.', '_')[0..63]
+end
+
+def tiny_name(domain=nil)
+  return "#{application[0..7]}_#{domain[0..6]}".gsub('.', '_') if domain && domain != 'default'
+  return application.gsub('.', '_')[0..15]
 end
 
 def random_password(size = 16)
