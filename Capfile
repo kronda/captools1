@@ -1,6 +1,6 @@
 # TODO: Check that files directory links to /var/www/files
 # TODO: Add drupal/backup cron tasks to mgt server
-# TODO: Review db pull/push
+# TODO: Review db pull/push (perhaps use taps?)
 # TODO: Add db download (pull without the auto-restore)
 # TODO: Add file pull/push
 # TODO: Find a way to make create_settings_php and db:create isolatable
@@ -18,6 +18,9 @@
 # TODO: for prod: disable devel modules, enable css/js/page caches, disable theme auto-rebuild
 # TODO: What's supposed to happen for multi-site deployments?
 # TODO: Setup multisite for create_vhost
+# TODO: Make database user configurable
+# TODO: Add a password reset function to maint namespace
+# TODO: Add a 'make me an admin' function to maint namespace
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
@@ -163,6 +166,15 @@ end
 
 namespace :db do
   desc "Download a backup of the database(s) from the given stage."
+  task :download, :roles => :db, :only => { :primary => true } do
+    domains.each do |domain|
+      filename = "#{domain}_#{stage}.sql"
+      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > ~/#{filename}"
+      download("~/#{filename}", "db/#{filename}", :via=> :scp)
+    end
+  end
+  
+  desc "Download and apply a backup of the database(s) from the given stage."
   task :pull, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
       filename = "#{domain}_#{stage}.sql"
@@ -189,6 +201,29 @@ namespace :db do
                     GRANT ALL ON #{short_name(domain)}.* TO '#{tiny_name(domain)}'@'localhost' IDENTIFIED BY '#{db_pass}';
                     FLUSH PRIVILEGES;"
       run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
+    end
+  end
+end
+
+namespace :maint do
+  desc "Send the root password reset to your email box."
+  task :root_reset, :roles => :db, :only => { :primary => true } do
+    select_sql = "SELECT mail FROM users WHERE uid=1"
+    # store old mail here
+    change_sql = "UPDATE users SET mail='#{Capistrano::CLI.password_prompt("Your email: ")}' WHERE uid=1"
+    # send password reset mail here
+    revert_sql = "UPDATE users SET mail='#{mail}' WHERE uid=1"
+    
+    domains.each do |domain|
+      # Use drush to update each domain
+    end
+  end
+  
+  desc "Make yourself an admin account on each domain"
+  task :make_me_admin, :roles => :db, :only => { :primary => true } do
+    
+    domains.each do |domain|
+      # Use drush to update each domain
     end
   end
 end
