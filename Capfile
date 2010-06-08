@@ -21,6 +21,7 @@
 # TODO: Make database user configurable
 # TODO: Add a password reset function to maint namespace
 # TODO: Add a 'make me an admin' function to maint namespace
+# TODO: Create an export task to take the db, files, code and package them into a tarball
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
