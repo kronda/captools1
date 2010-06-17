@@ -202,6 +202,7 @@ namespace :db do
                     GRANT ALL ON #{short_name(domain)}.* TO '#{tiny_name(domain)}'@'localhost' IDENTIFIED BY '#{db_pass}';
                     FLUSH PRIVILEGES;"
       run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
+      puts "Using pass: #{db_pass}"
     end
   end
 end
@@ -256,14 +257,26 @@ namespace :files do
   desc "Download a backup of the sites/default/files directory from the given stage."
   task :pull, :roles => :web do
     domains.each do |domain|
-      download("#{deploy_to}/#{shared_dir}/#{domain}/files", "webroot/sites/#{domain}/files")
+      download("#{deploy_to}/#{shared_dir}/#{domain}/files/", "webroot/sites/#{domain}", :recursive => :true, :via => :scp)
     end
   end
   
   desc "Push a backup of the sites/default/files directory from the given stage."
   task :push, :roles => :web do
-    
+    domains.each do |domain|
+      upload("webroot/sites/#{domain}/files/", "#{deploy_to}/#{shared_dir}/#{domain}/", :recursive => :true, :via => :scp)
+    end
   end
+  
+  desc "Fix the permissions in the sites/*/files directory."
+  task :fix_perms, :roles => :web do
+    domains.each do |domain|
+      sudo "chown -R apache:mtm #{deploy_to}/#{shared_dir}/#{domain}/files"
+      sudo "chmod -R ug+rw #{deploy_to}/#{shared_dir}/#{domain}/files"
+    end
+  end
+  
+  before 'files:push', 'files:fix_perms'
 end
 
 def short_name(domain=nil)
