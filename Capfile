@@ -257,7 +257,7 @@ namespace :files do
   desc "Download a backup of the sites/default/files directory from the given stage."
   task :pull, :roles => :web do
     domains.each do |domain|
-      download("#{deploy_to}/#{shared_dir}/#{domain}/files/", "webroot/sites/#{domain}", :recursive => :true, :via => :scp)
+      download("#{deploy_to}/#{shared_dir}/#{domain}/files", "webroot/sites/#{domain}/files")
     end
   end
   
