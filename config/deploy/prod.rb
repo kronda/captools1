@@ -20,3 +20,9 @@ role :f5_db, 'web12'
 
 # The path to drush
 set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /var/lib/php/drush/drush.php"
+
+set :mysql_log_path, '/var/log/mysqld.log'
+set :mysql_slow_log_path, ''
+set :apache_error_log_path, '/var/log/httpd/error_log'
+set :apache_access_log_path, '/var/log/httpd/access_log'
+set :php_log_path, '/var/log/httpd/php_error.log'

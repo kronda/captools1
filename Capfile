@@ -233,23 +233,33 @@ end
 after "db:push", "deploy:cacheclear"
 
 namespace :logs do
-  desc "Pull down the apache error logs"
-  task :apache, :roles => :web do
-    domains.each do |domain|
-      
+  namespace :apache do
+    desc "Pull down the apache error logs"
+    task :error, :roles => :web do
+      puts capture "tail -n 1000 #{apache_error_log_path}"
+    end
+    
+    desc "Pull down the apache access logs"
+    task :access, :roles => :web do
+      puts capture "tail -n 1000 #{apache_access_log_path}"
     end
   end
   
-  desc "Pull down the mysql logs"
-  task :mysql, :roles => :db, :only => { :primary => true } do
-    domains.each do |domain|
-      
+  namespace :mysql do
+    desc "Pull down the mysql logs"
+    task :error, :roles => :db, :only => { :primary => true } do
+      puts capture "tail -n 1000 #{mysql_log_path}"
+    end
+    
+    desc "Pull down the mysql slow logs"
+    task :slow, :roles => :db, :only => { :primary => true } do
+      puts capture "tail -n 1000 #{mysql_slow_log_path}"
     end
   end
   
   desc "Pull down the php error logs"
   task :php, :roles => :web do
-    
+    puts capture "tail -n 1000 #{php_log_path}"
   end
 end
 
