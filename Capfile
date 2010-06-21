@@ -1,11 +1,7 @@
 # TODO: Check that files directory links to /var/www/files
 # TODO: Add drupal/backup cron tasks to mgt server
-# TODO: Review db pull/push (perhaps use taps?)
-# TODO: Add db download (pull without the auto-restore)
-# TODO: Add file pull/push
 # TODO: Find a way to make create_settings_php and db:create isolatable
 # TODO: Vhost should turn off overrides and create the vhost entry correctly
-# TODO: Add logs command
 # TODO: Add email settings to vhost
 # TODO: Check vhost file into svn
 # TODO: Add SSL Support
