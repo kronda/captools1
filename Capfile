@@ -1,6 +1,5 @@
 # TODO: Check that files directory links to /var/www/files
 # TODO: Add drupal/backup cron tasks to mgt server
-# TODO: Find a way to make create_settings_php and db:create isolatable
 # TODO: Vhost should turn off overrides and create the vhost entry correctly
 # TODO: Add email settings to vhost
 # TODO: Check vhost file into svn
@@ -38,30 +37,9 @@ namespace :deploy do
     run "umask 02 && mkdir -p #{dirs.join(' ')}"
   end
   
-  desc "Create the vhost entry for apache"
-  task :create_vhost, :roles => :web, :only => { :stage => :prod } do
-    configuration = "
-    <VirtualHost *:80>
-      ServerName  #{application}
-      ServerAlias www.#{application}
-
-      DocumentRoot #{current_path}/#{app_root}/
-      <Directory #{current_path}/#{app_root}/>
-        AllowOverride All
-        Allow from all
-      </Directory>
-    </VirtualHost>"
-    
-    put configuration, "/etc/httpd/vhost.d/capistrano/#{short_name}.conf"
-  end
-  
   after "deploy:setup", 
     "deploy:create_settings_php",
-    "db:create",
-    "deploy:create_vhost", 
-    "deploy:restart",
-    "deploy:setup_drupal_tasks",
-    "deploy:setup_backup_tasks"
+    "db:create"
   
   after "deploy:create_vhost",
     "deploy:restart"
@@ -71,7 +49,7 @@ namespace :deploy do
     "deploy:cacheclear",
     "deploy:cleanup"
 
-  desc "Create settings.php in shared/config"
+  desc "Create local settings.php in shared/config"
   task :create_settings_php, :roles => :web do
     domains.each do |domain|
       configuration = <<-EOF
@@ -158,9 +136,6 @@ EOF
 
 end
 
-
-### TODO - The backup / restore tasks are a bit rough...
-
 namespace :db do
   desc "Download a backup of the database(s) from the given stage."
   task :down, :roles => :db, :only => { :primary => true } do
@@ -194,8 +169,8 @@ namespace :db do
   task :create, :roles => :db, :only => { :primary => true } do
     # Create and gront privs to the new db user
     domains.each do |domain|
-      create_sql = "CREATE DATABASE IF NOT EXISTS #{short_name(domain)} ;
-                    GRANT ALL ON #{short_name(domain)}.* TO '#{tiny_name(domain)}'@'localhost' IDENTIFIED BY '#{db_pass}';
+      create_sql = "CREATE DATABASE IF NOT EXISTS \\\`#{short_name(domain)}\\\` ;
+                    GRANT ALL ON \\\`#{short_name(domain)}\\\`.* TO '#{tiny_name(domain)}'@'localhost' IDENTIFIED BY '#{db_pass}';
                     FLUSH PRIVILEGES;"
       run "mysql -u root -p#{db_root_pass} -e \"#{create_sql}\""
       puts "Using pass: #{db_pass}"

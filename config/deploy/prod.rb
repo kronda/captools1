@@ -26,3 +26,30 @@ set :mysql_slow_log_path, ''
 set :apache_error_log_path, '/var/log/httpd/error_log'
 set :apache_access_log_path, '/var/log/httpd/access_log'
 set :php_log_path, '/var/log/httpd/php_error.log'
+
+namespace :deploy do
+  after "deploy:setup", 
+    "deploy:create_settings_php",
+    "db:create",
+    "deploy:create_vhost", 
+    "deploy:restart",
+    "deploy:setup_drupal_tasks",
+    "deploy:setup_backup_tasks"
+  
+  desc "Create the vhost entry for apache"
+  task :create_vhost, :roles => :web, :only => { :stage => :prod } do
+    configuration = "
+    <VirtualHost *:80>
+      ServerName  #{application}
+      ServerAlias www.#{application}
+
+      DocumentRoot #{current_path}/#{app_root}/
+      <Directory #{current_path}/#{app_root}/>
+        AllowOverride All
+        Allow from all
+      </Directory>
+    </VirtualHost>"
+    
+    put configuration, "/etc/httpd/vhost.d/capistrano/#{short_name}.conf"
+  end
+end

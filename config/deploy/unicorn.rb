@@ -14,8 +14,6 @@ role :db, "#{application}.unicorn.mtmdevel.com", :primary => true
 # The path to drush
 set :drush, "cd #{current_path}/#{app_root} ; drush"
 
-namespace :deploy do
-  %w{migrate migrations cold start stop restart setup symlink symlink_files finalize_update update_code update}.each do |name|
-    task name do; end
-  end
-end
+# These facilitate local settings.php creation and db creation
+set :db_pass, "%QBK#&Ks&VcY^v8q"
+set :shared_dir, 'drupal/sites'
