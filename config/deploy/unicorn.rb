@@ -12,8 +12,38 @@ role :db, "#{application}.unicorn.mtmdevel.com", :primary => true
 # ssh_options[:user] = 'alice'
 
 # The path to drush
-set :drush, "cd #{current_path}/#{app_root} ; drush"
+set :drush, "cd #{app_root} ; drush"
 
 # These facilitate local settings.php creation and db creation
 set :db_pass, "%QBK#&Ks&VcY^v8q"
 set :shared_dir, 'drupal/sites'
+
+namespace :drupal do
+  desc "Create a new Drupal install"
+  task :setup do
+    system 'mkdir drupal'
+    system 'cd drupal && drush -y make http://metaltoad.mtmdevel.com/metaltoad.make'
+    system 'cp drupal/sites/default/default.settings.php drupal/sites/default/settings.php'
+    system %Q{echo "if (file_exists('./'. conf_path() .'/local_settings.php')) {
+  include_once './'. conf_path() .'/local_settings.php';
+}" >> drupal/sites/default/settings.php}
+    system "cap #{stage} deploy:create_settings_php"
+    system "cap #{stage} db:create"
+    system "open http://#{roles[:web].first.host}/install.php"
+  end
+  
+  task :browser do 
+    system "open http://#{roles[:web].first.host}/install.php"
+  end
+end
+
+# TODO: This should not dump to _dev.sql
+namespace :db do
+  desc "Dump the current local database"
+  task :dump do
+    domains.each do |domain|
+      filename = "#{domain}_dev.sql"
+      system "#{drush} --uri=#{domain} sql-dump > ../db/#{filename}"
+    end
+  end
+end
