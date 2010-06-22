@@ -17,6 +17,7 @@
 # TODO: Add a password reset function to maint namespace
 # TODO: Add a 'make me an admin' function to maint namespace
 # TODO: Create an export task to take the db, files, code and package them into a tarball
+# TODO: Make sure that dashes in the short-name don't hose everything. gsub them into underscores probably
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
