@@ -1,3 +1,4 @@
+# TODO: Cap db:push should just do a backup right beforehand even if we did our own backup
 # TODO: Check that files directory links to /var/www/files
 # TODO: Add drupal/backup cron tasks to mgt server
 # TODO: Vhost should turn off overrides and create the vhost entry correctly
