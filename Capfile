@@ -18,6 +18,7 @@
 # TODO: Add a 'make me an admin' function to maint namespace
 # TODO: Create an export task to take the db, files, code and package them into a tarball
 # TODO: Make sure that dashes in the short-name don't hose everything. gsub them into underscores probably
+# TODO: Make it possible to check for the directory structure on the server and make recommendations
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
@@ -25,8 +26,27 @@ load 'config/deploy.rb'
 
 require 'capistrano/ext/multistage'
 
-namespace :deploy do
+namespace :check do 
+  desc "Tests to see if SSH is working"
+  task :uname do
+    run "uname -a"
+  end
+  
+  desc "Checks on the versions of things on a server"
+  task :versians do
+    run "uname -a"
+    run "php -v"
+    run "httpd -v"
+    run "mysql --help | grep Ver"
+  end
+  
+  desc "Checks to see if the directory structure is in place"
+  task :directory do
+    
+  end
+end
 
+namespace :deploy do
   # Overwritten to provide flexibility for people who aren't using Rails.
   desc "Prepares one or more servers for deployment."
   task :setup, :except => { :no_release => true } do

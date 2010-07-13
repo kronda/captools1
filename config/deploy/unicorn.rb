@@ -18,6 +18,12 @@ set :drush, "cd #{app_root} ; drush"
 set :db_pass, "%QBK#&Ks&VcY^v8q"
 set :shared_dir, 'drupal/sites'
 
+set :mysql_log_path, '/Applications/MAMP/logs/mysql_error_log.err'
+set :mysql_slow_log_path, ''
+set :apache_error_log_path, '/Applications/MAMP/logs/apache_error_log'
+set :apache_access_log_path, ''
+set :php_log_path, '/Applications/MAMP/logs/php_error.log'
+
 namespace :drupal do
   desc "Create a new Drupal install"
   task :setup do
@@ -44,6 +50,14 @@ namespace :db do
     domains.each do |domain|
       filename = "#{domain}_dev.sql"
       system "#{drush} --uri=#{domain} sql-dump > ../db/#{filename}"
+    end
+  end
+  
+  desc "Compress the database dumps for committing to git"
+  task :compress do
+    domains.each do |domain|
+      filename = "#{domain}_dev.sql"
+      system "cd db && tar -cjf #{filename}.tar.bz2 #{filename} && rm #{filename}"
     end
   end
 end

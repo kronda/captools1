@@ -21,6 +21,9 @@ role :f5_db, 'web12'
 # The path to drush
 set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /var/lib/php/drush/drush.php"
 
+# Specify the user for SSH
+# set :user, 'root'
+
 set :mysql_log_path, '/var/log/mysqld.log'
 set :mysql_slow_log_path, ''
 set :apache_error_log_path, '/var/log/httpd/error_log'
@@ -37,7 +40,7 @@ namespace :deploy do
     "deploy:setup_backup_tasks"
   
   desc "Create the vhost entry for apache"
-  task :create_vhost, :roles => :web, :only => { :stage => :prod } do
+  task :create_vhost, :roles => :web do
     configuration = "
     <VirtualHost *:80>
       ServerName  #{application}
