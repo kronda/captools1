@@ -71,6 +71,15 @@ namespace :deploy do
     "deploy:cacheclear",
     "deploy:cleanup"
 
+  before "deploy",
+    "deploy:fix_cached_copy_permissions"
+    
+  desc "Fix the permissions on the cached copy before running the deploy"
+  task :fix_cached_copy_permissions, :roles => :web do
+    sudo "chmod ug+rw -R #{deploy_to}/#{shared_dir}/cached-copy"
+    sudo "chown apache:mtm -R #{deploy_to}/#{shared_dir}/cached-copy"
+  end
+
   desc "Create local settings.php in shared/config"
   task :create_settings_php, :roles => :web do
     domains.each do |domain|
