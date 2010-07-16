@@ -20,6 +20,7 @@
 # TODO: Create an export task to take the db, files, code and package them into a tarball
 # TODO: Make sure that dashes in the short-name don't hose everything. gsub them into underscores probably
 # TODO: Make it possible to check for the directory structure on the server and make recommendations
+# FIXME: Vhost creation needs a url instead of a project name
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
@@ -77,7 +78,7 @@ namespace :deploy do
   desc "Fix the permissions on the cached copy before running the deploy"
   task :fix_cached_copy_permissions, :roles => :web do
     sudo "chmod ug+rw -R #{deploy_to}/#{shared_dir}/cached-copy"
-    sudo "chown apache:mtm -R #{deploy_to}/#{shared_dir}/cached-copy"
+    sudo "chown #{chown_user}:#{chown_group} -R #{deploy_to}/#{shared_dir}/cached-copy"
   end
 
   desc "Create local settings.php in shared/config"
@@ -144,7 +145,6 @@ EOF
       end
     end
   end
-
 
   # Each of the following tasks are Rails specific. They're removed.
   task :migrate do
@@ -283,7 +283,7 @@ namespace :files do
   desc "Fix the permissions in the sites/*/files directory."
   task :fix_perms, :roles => :web do
     domains.each do |domain|
-      sudo "chown -R apache:mtm #{deploy_to}/#{shared_dir}/#{domain}/files"
+      sudo "chown -R #{chown_user}:#{chown_group} #{deploy_to}/#{shared_dir}/#{domain}/files"
       sudo "chmod -R ug+rw #{deploy_to}/#{shared_dir}/#{domain}/files"
     end
   end

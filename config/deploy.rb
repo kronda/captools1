@@ -1,4 +1,4 @@
- # The project name.
+ # The project name. (one word: no spaces, dashes, or underscores)
 # set :application, "8to13.com"
 set :application, ""
 
@@ -33,3 +33,8 @@ set :use_sudo, false
 
 # This allows the sudo command to work if you do need it
 default_run_options[:pty] = true
+
+# Override these in your stage files if you need to use something other than apache:mtm
+# for user/group ownership
+set :chown_user, 'apache'
+set :chown_group, 'mtm'
