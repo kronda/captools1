@@ -77,8 +77,8 @@ namespace :deploy do
     
   desc "Fix the permissions on the cached copy before running the deploy"
   task :fix_cached_copy_permissions, :roles => :web do
-    sudo "chmod ug+rw -R #{deploy_to}/#{shared_dir}/cached-copy"
-    sudo "chown #{chown_user}:#{chown_group} -R #{deploy_to}/#{shared_dir}/cached-copy"
+    sudo "chmod ug+rw -R #{deploy_to}/#{shared_dir}"
+    sudo "chown #{chown_user}:#{chown_group} -R #{deploy_to}/#{shared_dir}"
   end
 
   desc "Create local settings.php in shared/config"
