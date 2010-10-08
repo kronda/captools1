@@ -1,3 +1,4 @@
+# FIXME: mistyping a hostname results in deadlock
 # TODO: Cap db:push should just do a backup right beforehand even if we did our own backup
 # TODO: Check that files directory links to /var/www/files
 # TODO: Add drupal/backup cron tasks to mgt server
@@ -77,8 +78,10 @@ namespace :deploy do
     
   desc "Fix the permissions on the cached copy before running the deploy"
   task :fix_cached_copy_permissions, :roles => :web do
-    sudo "chmod ug+rw -R #{deploy_to}/#{shared_dir}"
-    sudo "chown #{chown_user}:#{chown_group} -R #{deploy_to}/#{shared_dir}"
+    run "if [[ -w #{deploy_to}/#{shared_dir} ]] ; then \
+      #{sudo} chmod ug+rw -R #{deploy_to}/#{shared_dir} && \
+      #{sudo} chown #{chown_user}:#{chown_group} -R #{deploy_to}/#{shared_dir}; \
+    fi"
   end
 
   desc "Create local settings.php in shared/config"

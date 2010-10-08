@@ -26,7 +26,7 @@ set :deploy_via, :remote_cache
 
 # Multistage support - see config/deploy/[STAGE].rb for specific configs
 set :default_stage, "dev"
-set :stages, %w(dev prod unicorn jasper)
+set :stages, %w(dev staging prod)
 
 # Generally don't need sudo for this deploy setup
 set :use_sudo, false
