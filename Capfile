@@ -2,7 +2,6 @@
 # FIXME: mistyping a hostname results in deadlock
 # TODO: Add drupal/backup cron tasks to mgt server
 # TODO: apache restart should try doing a -t before continuing
-# TODO: setup consistent deployment user w/ deploy keys
 # TODO: Make sure that dashes in the short-name don't hose everything. gsub them into underscores probably
 # TODO: Make it possible to check for the directory structure on the server and make recommendations
 # FIXME: Vhost creation needs a url instead of a project name
@@ -76,17 +75,6 @@ namespace :deploy do
     "deploy:symlink_files",
     "deploy:cacheclear",
     "deploy:cleanup"
-
-  before "deploy",
-    "deploy:fix_cached_copy_permissions"
-    
-  desc "Fix the permissions on the cached copy before running the deploy"
-  task :fix_cached_copy_permissions, :roles => :web do
-    run "if [[ -w #{deploy_to}/#{shared_dir} ]] ; then \
-      #{sudo} chmod ug+rw -R #{deploy_to}/#{shared_dir} && \
-      #{sudo} chown #{chown_user}:#{chown_group} -R #{deploy_to}/#{shared_dir}; \
-    fi"
-  end
 
   desc "Create local settings.php in shared/config"
   task :create_settings_php, :roles => :web do
@@ -286,16 +274,6 @@ namespace :files do
       upload("webroot/sites/#{domain}/files/", "#{deploy_to}/#{shared_dir}/#{domain}/", :recursive => :true, :via => :scp)
     end
   end
-  
-  desc "Fix the permissions in the sites/*/files directory."
-  task :fix_perms, :roles => :web do
-    domains.each do |domain|
-      sudo "chown -R #{chown_user}:#{chown_group} #{deploy_to}/#{shared_dir}/#{domain}/files"
-      sudo "chmod -R ug+rw #{deploy_to}/#{shared_dir}/#{domain}/files"
-    end
-  end
-  
-  before 'files:push', 'files:fix_perms'
 end
 
 def short_name(domain=nil)
