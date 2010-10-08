@@ -1,27 +1,31 @@
+# Essential
 # FIXME: mistyping a hostname results in deadlock
-# TODO: Cap db:push should just do a backup right beforehand even if we did our own backup
-# TODO: Check that files directory links to /var/www/files
 # TODO: Add drupal/backup cron tasks to mgt server
-# TODO: Vhost should turn off overrides and create the vhost entry correctly
-# TODO: Add email settings to vhost
-# TODO: Check vhost file into svn
-# TODO: Add SSL Support
-# TODO: Add VirtualDocumentRoot settings
-# TODO: Document the password used during setup so that we can change that in the stage's deploy recipe
 # TODO: apache restart should try doing a -t before continuing
 # TODO: setup consistent deployment user w/ deploy keys
-# TODO: chmod ug+rw -R #{app_root} after deploy
-# TODO: add release maintenance, keep 10 copies
-# TODO: for prod: disable devel modules, enable css/js/page caches, disable theme auto-rebuild
-# TODO: What's supposed to happen for multi-site deployments?
-# TODO: Setup multisite for create_vhost
-# TODO: Make database user configurable
-# TODO: Add a password reset function to maint namespace
-# TODO: Add a 'make me an admin' function to maint namespace
-# TODO: Create an export task to take the db, files, code and package them into a tarball
 # TODO: Make sure that dashes in the short-name don't hose everything. gsub them into underscores probably
 # TODO: Make it possible to check for the directory structure on the server and make recommendations
 # FIXME: Vhost creation needs a url instead of a project name
+# TODO: Create a separate deploy/setup for db servers as opposed to web only servers
+# TODO: Add SSL Support
+# TODO: Add VirtualDocumentRoot settings
+# TODO: Setup multisite for create_vhost
+# FIXME: Figure out server config that makes permissions settings unnecessary
+
+# Feature requests
+# TODO: for prod: disable devel modules, enable css/js/page caches, disable theme auto-rebuild
+# TODO: Cap db:push should just do a backup right beforehand even if we did our own backup
+# TODO: Add a password reset function to maint namespace
+# TODO: Add a 'make me an admin' function to maint namespace
+# TODO: Create an export task to take the db, files, code and package them into a tarball
+
+# Deprecated? Hopefully soon at least
+# TODO: Check that files directory links to /var/www/files
+# TODO: Vhost should turn off overrides and create the vhost entry correctly
+# TODO: Add email settings to vhost
+# TODO: chmod ug+rw -R #{app_root} after deploy
+# TODO: What's supposed to happen for multi-site deployments?
+# TODO: Make database user configurable
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
@@ -52,7 +56,7 @@ end
 namespace :deploy do
   # Overwritten to provide flexibility for people who aren't using Rails.
   desc "Prepares one or more servers for deployment."
-  task :setup, :except => { :no_release => true } do
+  task :setup, :roles => :web, :except => { :no_release => true } do
     dirs = [deploy_to, releases_path, shared_path]
     domains.each do |domain|
       dirs += [shared_path + "/#{domain}/files"]
@@ -272,7 +276,7 @@ namespace :files do
   desc "Download a backup of the sites/default/files directory from the given stage."
   task :pull, :roles => :web do
     domains.each do |domain|
-      download("#{deploy_to}/#{shared_dir}/#{domain}/files", "webroot/sites/#{domain}/files")
+      run_locally("rsync --recursive --times --rsh=ssh --compress --human-readable --progress #{ssh_options[:user]}@#{find_servers.first.host}:#{deploy_to}/#{shared_dir}/#{domain}/files/ webroot/sites/#{domain}/files/")
     end
   end
   
