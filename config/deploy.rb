@@ -23,6 +23,7 @@ set :app_root, "drupal"
 
 # Use a remote cache to speed things up
 set :deploy_via, :remote_cache
+ssh_options[:user] = 'deploy'
 
 # Multistage support - see config/deploy/[STAGE].rb for specific configs
 set :default_stage, "dev"

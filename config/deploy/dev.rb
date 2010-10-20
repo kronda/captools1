@@ -8,9 +8,6 @@ role :web, "#{application}-#{stage}.metaltoad.com"
 # This server should also be running Drupal.
 role :db, "#{application}-#{stage}.metaltoad.com", :primary => true
 
-# The username on the target system, if different from your local username
-# ssh_options[:user] = 'alice'
-
 # The path to drush
 set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /data/lib/php/drush/drush.php"
 

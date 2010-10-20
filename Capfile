@@ -9,7 +9,6 @@
 # TODO: Add SSL Support
 # TODO: Add VirtualDocumentRoot settings
 # TODO: Setup multisite for create_vhost
-# FIXME: Figure out server config that makes permissions settings unnecessary
 
 # Feature requests
 # TODO: for prod: disable devel modules, enable css/js/page caches, disable theme auto-rebuild

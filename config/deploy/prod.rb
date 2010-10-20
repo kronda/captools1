@@ -21,8 +21,8 @@ role :f5_db, 'web12'
 # The path to drush
 set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /var/lib/php/drush/drush.php"
 
-# Specify the user for SSH
-# set :user, 'root'
+# The username on the target system, if different from your local username
+# ssh_options[:user] = 'alice'
 
 set :mysql_log_path, '/var/log/mysqld.log'
 set :mysql_slow_log_path, ''
