@@ -31,12 +31,12 @@ load 'config/deploy.rb'
 
 require 'capistrano/ext/multistage'
 
-namespace :check do 
+namespace :check do
   desc "Tests to see if SSH is working"
   task :uname do
     run "uname -a"
   end
-  
+
   desc "Checks on the versions of things on a server"
   task :versians do
     run "uname -a"
@@ -44,10 +44,10 @@ namespace :check do
     run "httpd -v"
     run "mysql --help | grep Ver"
   end
-  
+
   desc "Checks to see if the directory structure is in place"
   task :directory do
-    
+
   end
 end
 
@@ -62,15 +62,15 @@ namespace :deploy do
     dirs += %w(system).map { |d| File.join(shared_path, d) }
     run "umask 02 && mkdir -p #{dirs.join(' ')}"
   end
-  
-  after "deploy:setup", 
+
+  after "deploy:setup",
     "deploy:create_settings_php",
     "db:create"
-  
+
   after "deploy:create_vhost",
     "deploy:restart"
-    
-  after "deploy", 
+
+  after "deploy",
     "deploy:symlink_files",
     "deploy:cacheclear",
     "deploy:cleanup"
@@ -97,13 +97,13 @@ EOF
       run "ln -nfs #{deploy_to}/#{shared_dir}/#{domain}/files #{release_path}/#{app_root}/sites/#{domain}/files"
     end
   end
-  
+
   namespace :cron do
     desc "Add in the cron.php tasks"
     task :setup_drupal_tasks, :roles => :mgt do
       run "uname -a"
     end
-  
+
     desc "Add in the backup cron tasks"
     task :setup_backup_tasks, :roles => :mgt do
       run "uname -a"
@@ -170,7 +170,7 @@ namespace :db do
       download("~/#{filename}", "db/#{filename}", :via=> :scp)
     end
   end
-  
+
   desc "Download and apply a backup of the database(s) from the given stage."
   task :pull, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
@@ -189,7 +189,7 @@ namespace :db do
       run "#{drush} --uri=#{domain} sql-cli < ~/#{filename}"
     end
   end
-  
+
   desc "Create database"
   task :create, :roles => :db, :only => { :primary => true } do
     # Create and gront privs to the new db user
@@ -211,15 +211,15 @@ namespace :maint do
     change_sql = "UPDATE users SET mail='#{Capistrano::CLI.password_prompt("Your email: ")}' WHERE uid=1"
     # send password reset mail here
     revert_sql = "UPDATE users SET mail='#{mail}' WHERE uid=1"
-    
+
     domains.each do |domain|
       # Use drush to update each domain
     end
   end
-  
+
   desc "Make yourself an admin account on each domain"
   task :make_me_admin, :roles => :db, :only => { :primary => true } do
-    
+
     domains.each do |domain|
       # Use drush to update each domain
     end
@@ -234,39 +234,39 @@ namespace :logs do
     task :error, :roles => :web do
       puts capture "tail -n 1000 #{apache_error_log_path}"
     end
-    
+
     desc "Pull down the apache access logs"
     task :access, :roles => :web do
       puts capture "tail -n 1000 #{apache_access_log_path}"
     end
   end
-  
+
   namespace :mysql do
     desc "Pull down the mysql logs"
     task :error, :roles => :db, :only => { :primary => true } do
       puts capture "tail -n 1000 #{mysql_log_path}"
     end
-    
+
     desc "Pull down the mysql slow logs"
     task :slow, :roles => :db, :only => { :primary => true } do
       puts capture "tail -n 1000 #{mysql_slow_log_path}"
     end
   end
-  
+
   desc "Pull down the php error logs"
   task :php, :roles => :web do
     puts capture "tail -n 1000 #{php_log_path}"
   end
 end
 
-namespace :files do 
+namespace :files do
   desc "Download a backup of the sites/default/files directory from the given stage."
   task :pull, :roles => :web do
     domains.each do |domain|
       run_locally("rsync --recursive --times --rsh=ssh --compress --human-readable --progress #{ssh_options[:user]}@#{find_servers.first.host}:#{deploy_to}/#{shared_dir}/#{domain}/files/ webroot/sites/#{domain}/files/")
     end
   end
-  
+
   desc "Push a backup of the sites/default/files directory from the given stage."
   task :push, :roles => :web do
     domains.each do |domain|
@@ -286,6 +286,6 @@ def tiny_name(domain=nil)
 end
 
 def random_password(size = 16)
-  chars = (('A'..'Z').to_a + ('a'..'z').to_a + ('0'..'9').to_a) - %w(i o 0 1 l 0) + %w(! @ # $ % ^ & *)
+  chars = (('A'..'Z').to_a + ('a'..'z').to_a + ('0'..'9').to_a) - %w(i o 0 1 l 0)
   (1..size).collect{|a| chars[rand(chars.size)] }.join
 end
