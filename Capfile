@@ -276,13 +276,13 @@ namespace :files do
 end
 
 def short_name(domain=nil)
-  return "#{application}_#{domain}".gsub('.', '_')[0..63] if domain && domain != 'default'
-  return application.gsub('.', '_')[0..63]
+  return "#{application}_#{stage}_#{domain}".gsub('.', '_')[0..63] if domain && domain != 'default'
+  return "#{application}_#{stage}".gsub('.', '_')[0..63]
 end
 
 def tiny_name(domain=nil)
-  return "#{application[0..7]}_#{domain[0..6]}".gsub('.', '_') if domain && domain != 'default'
-  return application.gsub('.', '_')[0..15]
+  return "#{application[0..5]}_#{stage.to_s[0..2]}_#{domain[0..4]}".gsub('.', '_') if domain && domain != 'default'
+  return "#{application[0..11]}_#{stage.to_s[0..2]}".gsub('.', '_')
 end
 
 def random_password(size = 16)
