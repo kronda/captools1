@@ -5,7 +5,7 @@ set :deploy_to, "/var/www/sites/capistrano/#{application}"
 role :web, 'web12'
 role :web, 'web13'
 
-set :gateway, '66.206.88.70'
+set :gateway, '66.206.88.71'
 
 # Specify one of the web servers to use for database backups or updates.
 # This server should also be running Drupal.
@@ -19,10 +19,10 @@ role :mgt, "mgt71"
 role :f5_db, 'web12'
 
 # The path to drush
-set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /var/lib/php/drush/drush.php"
+set :drush, "cd #{current_path}/#{app_root} ; /usr/local/bin/drush"
 
 # The username on the target system, if different from your local username
-# ssh_options[:user] = 'alice'
+ssh_options[:user] = 'deploy'
 
 set :mysql_log_path, '/var/log/mysqld.log'
 set :mysql_slow_log_path, ''
@@ -31,14 +31,14 @@ set :apache_access_log_path, '/var/log/httpd/access_log'
 set :php_log_path, '/var/log/httpd/php_error.log'
 
 namespace :deploy do
-  after "deploy:setup", 
+  after "deploy:setup",
     "deploy:create_settings_php",
     "db:create",
-    "deploy:create_vhost", 
+    "deploy:create_vhost",
     "deploy:restart",
     "deploy:setup_drupal_tasks",
     "deploy:setup_backup_tasks"
-  
+
   desc "Create the vhost entry for apache"
   task :create_vhost, :roles => :web do
     configuration = "
@@ -52,7 +52,7 @@ namespace :deploy do
         Allow from all
       </Directory>
     </VirtualHost>"
-    
+
     put configuration, "/etc/httpd/vhost.d/capistrano/#{short_name}.conf"
   end
 end

@@ -9,7 +9,10 @@ role :web, "#{application}-#{stage}.metaltoad.com"
 role :db, "#{application}-#{stage}.metaltoad.com", :primary => true
 
 # The path to drush
-set :drush, "cd #{current_path}/#{app_root} ; /usr/bin/php /data/lib/php/drush/drush.php"
+set :drush, "cd #{current_path}/#{app_root} ; /usr/local/bin/drush"
+
+# The username on the target system, if different from your local username
+ssh_options[:user] = 'deploy'
 
 set :mysql_log_path, '/var/log/mysqld.log'
 set :mysql_slow_log_path, ''
