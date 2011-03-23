@@ -70,8 +70,10 @@ namespace :deploy do
   after "deploy:create_vhost",
     "deploy:restart"
 
+  after "deploy:update_code",
+    "deploy:symlink_files"
+
   after "deploy",
-    "deploy:symlink_files",
     "deploy:cacheclear",
     "deploy:cleanup"
 
@@ -90,7 +92,7 @@ EOF
   desc "link file dirs and the local_settings.php to the shared copy"
   task :symlink_files, :roles => :web do
     domains.each do |domain|
-    # link settings file
+      # link settings file
       run "ln -nfs #{deploy_to}/#{shared_dir}/#{domain}/local_settings.php #{release_path}/#{app_root}/sites/#{domain}/local_settings.php"
       # remove any link or directory that was exported from SCM, and link to remote Drupal filesystem
       run "rm -rf #{release_path}/sites/#{domain}/files"
