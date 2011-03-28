@@ -266,9 +266,9 @@ namespace :files do
   task :pull, :roles => :web do
     domains.each do |domain|
       if exists?(:gateway)
-        run_locally("rsync --recursive --times --rsh='ssh #{ssh_options[:user]}@#{gateway} ssh  #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}' --compress --human-readable --progress :#{deploy_to}/#{shared_dir}/#{domain}/files/ webroot/sites/#{domain}/files/")
+        run_locally("rsync --recursive --times --omit-dir-times --chmod=ugo=rwX --rsh='ssh #{ssh_options[:user]}@#{gateway} ssh  #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}' --compress --human-readable --progress :#{deploy_to}/#{shared_dir}/#{domain}/files/ webroot/sites/#{domain}/files/")
       else
-        run_locally("rsync --recursive --times --rsh=ssh --compress --human-readable --progress #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}:#{deploy_to}/#{shared_dir}/#{domain}/files/ webroot/sites/#{domain}/files/")
+        run_locally("rsync --recursive --times --omit-dir-times --chmod=ugo=rwX --rsh=ssh --compress --human-readable --progress #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}:#{deploy_to}/#{shared_dir}/#{domain}/files/ webroot/sites/#{domain}/files/")
       end
     end
   end
@@ -277,9 +277,9 @@ namespace :files do
   task :push, :roles => :web do
     domains.each do |domain|
       if exists?(:gateway)
-        run_locally("rsync --recursive --times --rsh='ssh #{ssh_options[:user]}@#{gateway} ssh  #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}' --compress --human-readable --progress webroot/sites/#{domain}/files/ :#{deploy_to}/#{shared_dir}/#{domain}/files/")
+        run_locally("rsync --recursive --times --omit-dir-times --chmod=ugo=rwX --rsh='ssh #{ssh_options[:user]}@#{gateway} ssh  #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}' --compress --human-readable --progress webroot/sites/#{domain}/files/ :#{deploy_to}/#{shared_dir}/#{domain}/files/")
       else
-        run_locally("rsync --recursive --times --rsh=ssh --compress --human-readable --progress webroot/sites/#{domain}/files/ #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}:#{deploy_to}/#{shared_dir}/#{domain}/files/")
+        run_locally("rsync --recursive --times --omit-dir-times --chmod=ugo=rwX --rsh=ssh --compress --human-readable --progress webroot/sites/#{domain}/files/ #{ssh_options[:user]}@#{find_servers(:roles => :web).first.host}:#{deploy_to}/#{shared_dir}/#{domain}/files/")
       end
     end
   end
