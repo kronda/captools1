@@ -71,7 +71,8 @@ namespace :deploy do
     "deploy:restart"
 
   after "deploy:update_code",
-    "deploy:symlink_files"
+    "deploy:symlink_files",
+    "deploy:setperms"
 
   after "deploy",
     "deploy:cacheclear",
@@ -121,6 +122,13 @@ EOF
   task :cacheclear, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
       run "#{drush} --uri=#{domain} cache-clear all"
+    end
+  end
+
+  desc "Set Drupal file permissions."
+  task :setperms, :roles => :web do
+    domains.each do |domain|
+      run "chmod -R 644 #{current_path}/#{app_root}/sites/#{domain}/settings.php"
     end
   end
 
