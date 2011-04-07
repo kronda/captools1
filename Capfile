@@ -128,7 +128,7 @@ EOF
   desc "Set Drupal file permissions."
   task :setperms, :roles => :web do
     domains.each do |domain|
-      run "chmod -R 644 #{current_path}/#{app_root}/sites/#{domain}/settings.php"
+      run "chmod -R 644 #{release_path}/#{app_root}/sites/#{domain}/settings.php"
     end
   end
 
