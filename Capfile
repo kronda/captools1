@@ -1,29 +1,5 @@
-# Essential
-# FIXME: mistyping a hostname results in deadlock
-# TODO: Add drupal/backup cron tasks to mgt server
-# TODO: apache restart should try doing a -t before continuing
-# TODO: Make sure that dashes in the short-name don't hose everything. gsub them into underscores probably
-# TODO: Make it possible to check for the directory structure on the server and make recommendations
-# FIXME: Vhost creation needs a url instead of a project name
-# TODO: Create a separate deploy/setup for db servers as opposed to web only servers
-# TODO: Add SSL Support
-# TODO: Add VirtualDocumentRoot settings
-# TODO: Setup multisite for create_vhost
-
-# Feature requests
-# TODO: for prod: disable devel modules, enable css/js/page caches, disable theme auto-rebuild
-# TODO: Cap db:push should just do a backup right beforehand even if we did our own backup
-# TODO: Add a password reset function to maint namespace
-# TODO: Add a 'make me an admin' function to maint namespace
-# TODO: Create an export task to take the db, files, code and package them into a tarball
-
-# Deprecated? Hopefully soon at least
-# TODO: Check that files directory links to /var/www/files
-# TODO: Vhost should turn off overrides and create the vhost entry correctly
-# TODO: Add email settings to vhost
-# TODO: chmod ug+rw -R #{app_root} after deploy
-# TODO: What's supposed to happen for multi-site deployments?
-# TODO: Make database user configurable
+# TODO: Cap db:push should support rollback or backup in some way
+# TODO: Better handling of database creation - perhaps make the deploy user a database admin?
 
 load 'deploy' if respond_to?(:namespace) # cap2 differentiator
 Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
@@ -31,28 +7,7 @@ load 'config/deploy.rb'
 
 require 'capistrano/ext/multistage'
 
-namespace :check do
-  desc "Tests to see if SSH is working"
-  task :uname do
-    run "uname -a"
-  end
-
-  desc "Checks on the versions of things on a server"
-  task :versians do
-    run "uname -a"
-    run "php -v"
-    run "httpd -v"
-    run "mysql --help | grep Ver"
-  end
-
-  desc "Checks to see if the directory structure is in place"
-  task :directory do
-
-  end
-end
-
 namespace :deploy do
-  # Overwritten to provide flexibility for people who aren't using Rails.
   desc "Prepares one or more servers for deployment."
   task :setup, :roles => :web, :except => { :no_release => true } do
     dirs = [deploy_to, releases_path, shared_path]
@@ -60,32 +15,33 @@ namespace :deploy do
       dirs += [shared_path + "/#{domain}/files"]
     end
     dirs += %w(system).map { |d| File.join(shared_path, d) }
-    run "umask 02 && mkdir -p #{dirs.join(' ')}"
+    run "mkdir -m 0775 -p #{dirs.join(' ')}"
+    # add setgid bit, so that files/ contents are always in the httpd group
+    run "chmod 2775 #{shared_path}/*/files"
+    run "chgrp #{httpd_group} #{shared_path}/*/files"
   end
-
-  after "deploy:setup",
-    "deploy:create_settings_php",
-    "db:create"
-
-  after "deploy:create_vhost",
-    "deploy:restart"
-
-  after "deploy:update_code",
-    "deploy:symlink_files",
-    "deploy:setperms"
-
-  after "deploy",
-    "deploy:cacheclear",
-    "deploy:cleanup"
 
   desc "Create local settings.php in shared/config"
   task :create_settings_php, :roles => :web do
     domains.each do |domain|
-      configuration = <<-EOF
+      if File.exist?('drupal/modules/overlay/overlay.module') # test for Drupal 7
+        configuration = <<-EOF
 <?php
-$db_url = 'mysql://#{tiny_name(domain)}:#{db_pass}@#{f5_db ||= "localhost"}/#{short_name(domain)}';
+$databases['default']['default'] = array(
+  'driver' => 'mysql',
+  'database' => '#{short_name(domain)}',
+  'username' => '#{tiny_name(domain)}',
+  'password' => '#{db_pass}',
+  'host' => 'localhost',
+);
+EOF
+      else
+        configuration = <<-EOF
+<?php
+$db_url = 'mysql://#{tiny_name(domain)}:#{db_pass}@localhost/#{short_name(domain)}';
 $db_prefix = '';
 EOF
+      end
       put configuration, "#{deploy_to}/#{shared_dir}/#{domain}/local_settings.php"
     end
   end
@@ -101,21 +57,10 @@ EOF
     end
   end
 
-  namespace :cron do
-    desc "Add in the cron.php tasks"
-    task :setup_drupal_tasks, :roles => :mgt do
-      run "uname -a"
-    end
-
-    desc "Add in the backup cron tasks"
-    task :setup_backup_tasks, :roles => :mgt do
-      run "uname -a"
-    end
-  end
-
   # desc '[internal] Touches up the released code.'
   task :finalize_update, :except => { :no_release => true } do
     run "chmod -R g+w #{release_path}"
+    run "chmod 644 #{release_path}/#{app_root}/sites/*/settings.php"
   end
 
   desc "Flush the Drupal cache system."
@@ -125,27 +70,18 @@ EOF
     end
   end
 
-  desc "Set Drupal file permissions."
-  task :setperms, :roles => :web do
-    domains.each do |domain|
-      run "chmod -R 644 #{release_path}/#{app_root}/sites/#{domain}/settings.php"
-    end
-  end
-
   namespace :web do
     desc "Set Drupal maintainance mode to online."
-    task :enable, :roles => :web do
+    task :enable do
       domains.each do |domain|
-        php = 'variable_set("site_offline", FALSE)'
-        run "#{drush} --uri=#{domain} php-eval '#{php}'"
+        run "#{drush} --uri=#{domain} vdel site_offline"
       end
     end
 
     desc "Set Drupal maintainance mode to off-line."
-    task :disable, :roles => :web do
+    task :disable do
       domains.each do |domain|
-        php = 'variable_set("site_offline", TRUE)'
-        run "#{drush} --uri=#{domain} php-eval '#{php}'"
+        run "#{drush} --uri=#{domain} vset site_offline 1"
       end
     end
   end
@@ -169,6 +105,16 @@ EOF
   task :restart, :roles => :web do
   end
 
+  after "deploy:setup",
+    "deploy:create_settings_php",
+    "db:create"
+
+  after "deploy:update_code",
+    "deploy:symlink_files"
+
+  after "deploy",
+    "deploy:cacheclear",
+    "deploy:cleanup"
 end
 
 namespace :db do
@@ -211,62 +157,8 @@ namespace :db do
       puts "Using pass: #{db_pass}"
     end
   end
-end
 
-namespace :maint do
-  desc "Send the root password reset to your email box."
-  task :root_reset, :roles => :db, :only => { :primary => true } do
-    select_sql = "SELECT mail FROM users WHERE uid=1"
-    # store old mail here
-    change_sql = "UPDATE users SET mail='#{Capistrano::CLI.password_prompt("Your email: ")}' WHERE uid=1"
-    # send password reset mail here
-    revert_sql = "UPDATE users SET mail='#{mail}' WHERE uid=1"
-
-    domains.each do |domain|
-      # Use drush to update each domain
-    end
-  end
-
-  desc "Make yourself an admin account on each domain"
-  task :make_me_admin, :roles => :db, :only => { :primary => true } do
-
-    domains.each do |domain|
-      # Use drush to update each domain
-    end
-  end
-end
-
-after "db:push", "deploy:cacheclear"
-
-namespace :logs do
-  namespace :apache do
-    desc "Pull down the apache error logs"
-    task :error, :roles => :web do
-      puts capture "tail -n 1000 #{apache_error_log_path}"
-    end
-
-    desc "Pull down the apache access logs"
-    task :access, :roles => :web do
-      puts capture "tail -n 1000 #{apache_access_log_path}"
-    end
-  end
-
-  namespace :mysql do
-    desc "Pull down the mysql logs"
-    task :error, :roles => :db, :only => { :primary => true } do
-      puts capture "tail -n 1000 #{mysql_log_path}"
-    end
-
-    desc "Pull down the mysql slow logs"
-    task :slow, :roles => :db, :only => { :primary => true } do
-      puts capture "tail -n 1000 #{mysql_slow_log_path}"
-    end
-  end
-
-  desc "Pull down the php error logs"
-  task :php, :roles => :web do
-    puts capture "tail -n 1000 #{php_log_path}"
-  end
+  after "db:push", "deploy:cacheclear"
 end
 
 namespace :files do
