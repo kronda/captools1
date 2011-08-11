@@ -122,8 +122,11 @@ namespace :db do
   task :down, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
       filename = "#{domain}_#{stage}.sql"
-      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > ~/#{filename}"
-      download("~/#{filename}", "db/#{filename}", :via=> :scp)
+      temp = "/tmp/#{release_name}_#{application}_#{filename}"
+      run "touch #{temp} && chmod 600 #{temp}"
+      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > #{temp}"
+      download("#{temp}", "db/#{filename}", :via=> :scp)
+      run "rm #{temp}"
     end
   end
 
@@ -131,8 +134,6 @@ namespace :db do
   task :pull, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
       filename = "#{domain}_#{stage}.sql"
-      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > ~/#{filename}"
-      download("~/#{filename}", "db/#{filename}", :via=> :scp)
       system "cd #{app_root} ; drush --uri=#{domain} sql-cli < ../db/#{filename}"
     end
   end
@@ -141,8 +142,11 @@ namespace :db do
   task :push, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
       filename = "#{domain}_#{stage}.sql"
-      upload("db/#{filename}", "~/#{filename}", :via=> :scp)
-      run "#{drush} --uri=#{domain} sql-cli < ~/#{filename}"
+      temp = "/tmp/#{release_name}_#{application}_#{filename}"
+      run "touch #{temp} && chmod 600 #{temp}"
+      upload("db/#{filename}", "#{temp}", :via=> :scp)
+      run "#{drush} --uri=#{domain} sql-cli < #{temp}"
+      run "rm #{temp}"
     end
   end
 
@@ -159,6 +163,7 @@ namespace :db do
   end
 
   after "db:push", "deploy:cacheclear"
+  before "db:pull", "db:down"
 end
 
 namespace :files do
