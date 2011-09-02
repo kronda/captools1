@@ -129,7 +129,8 @@ perl -pi -e 's/# RewriteBase \/$/RewriteBase \//' drupal/.htaccess
 perl -pi -e "s/\'devel_themer\',$/\/\/ \'devel_themer\',/" drupal/profiles/metaltoad/metaltoad.profile
 
 # remove Drupal's default .gitignore for D7 so that the settings.php file will be commited
-rm .gitignore
+rm drupal/.gitignore
+echo "Removing default Drupal 7 .gitignore file"
 
 # Final commit
 git add .
