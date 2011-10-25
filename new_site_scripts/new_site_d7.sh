@@ -12,7 +12,7 @@
 #
 # Additionally it requires you to have a Github account and have created a repository for your project
 
-# Edit this line if you want to install on a machine other than devsol
+# Edit this line if you want to install on a machine other than mole
 # export machine='unicorn' # <sitename>.<machinename>.metaltoad.com
 
 # Prompt for the site name
@@ -56,7 +56,7 @@ mkdir db
 # OR
 # git clone FOO
 
-# This creates the drupal specific directory using Drush and a make file that is hosted on devsol
+# This creates the drupal specific directory using Drush and a make file that is hosted on mole
 # This make file contains information on all of the modules to be included in our default install
 mkdir drupal
 ln -nsf drupal webroot
@@ -139,7 +139,7 @@ git remote add origin git@github.com:$gitcontext/$dbname.git
 git push origin master
 
 # Your local site is now ready for you to hit the /install.php Drupal file
-# From here down we're setting things up to deploy on Devsol:
+# From here down we're setting things up to deploy on Mole:
 # -----------------------------------------------
 
 # Add the capistrano files into the project
