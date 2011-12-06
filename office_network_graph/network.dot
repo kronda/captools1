@@ -1,0 +1,48 @@
+graph network {
+
+  graph[page="8.5,11",size="7.5,7",ratio=fill,center=1,fontsize=24];
+  label="\n\nSource: https://github.com/metaltoad/mtm_tools/blob/master/office_network_graph/network.dot"
+
+  node [shape=record];
+
+  copper [label="Silver Star Copper"]
+  modem [label="<t> SHDSL Modem (Hatteras Networks)|<copper> Copper pairs|<eth1> eth1"];
+  router [label="<t> Router (AdTran Netvanta)|<eth2> eth2: 12.155.34.72/29|<p1> Ports 1:7"];
+  mainswitch [label="24 port GigE switch (Netgear)"]
+  weaselswitch [label="16 port GigE switch (Netgear)"]
+  weasel [label="<t> Weasel: 192.168.1.1|<vz> OpenVZ|<dhcpd> DHCPD|<eth0> eth0: 192.168.1.1/16|<eth2> eth2: 12.155.34.74"];
+  mole [label="<t>Mole: 192.168.1.6|<dns>TinyDNS"];
+  tca [label="<t>Time Capsule A|<wifi> WiFi|<ether> Ethernet"];
+  tcb [label="<t>Time Capsule B|<wifi> WiFi|<ether> Ethernet"];
+  tcc [label="<t>Time Capsule C|<wifi> WiFi|<ether> Ethernet"];
+
+  copper -- modem:copper
+  modem:eth1 -- router;
+  router:eth2 -- weasel:eth2;
+  weasel:eth0 -- weaselswitch;
+  weaselswitch -- mainswitch;
+  weasel:vz -- mole;
+  mainswitch -- tca:t;
+  mainswitch -- tcb:t;
+  mainswitch -- tcc:t;
+
+
+  node [shape=ellipse];
+
+  router:p1 -- Phone1;
+  router:p1 -- Phone2;
+  router:p1 -- Phone3;
+
+  mainswitch -- Workstation1;
+  mainswitch -- Workstation2;
+
+  tca:wifi -- Workstation3 [style=dashed];
+  tca:ether -- Workstation4;
+  tcb:wifi -- Workstation5 [style=dashed];
+  tcb:ether -- Workstation6;
+  tcc:wifi -- Workstation7 [style=dashed];
+  tcc:ether -- Workstation8;
+
+
+
+}
