@@ -7,7 +7,7 @@ graph network {
 
   copper [label="Silver Star Copper"]
   modem [label="<t> SHDSL Modem (Hatteras Networks)|<copper> Copper pairs|<eth1> eth1"];
-  router [label="<t> Router (AdTran Netvanta)|<eth2> eth2: 12.155.34.72/29|<p1> Ports 1:7"];
+  router [label="<t> Router (AdTran Netvanta)|<eth1> eth1|<eth2> eth2: 12.155.34.72/29|<p1> Ports 1:7"];
   mainswitch [label="24 port GigE switch (Netgear)"]
   weaselswitch [label="16 port GigE switch (Netgear)"]
   weasel [label="<t> Weasel: 192.168.1.1|<vz> OpenVZ|<dhcpd> DHCPD|<eth0> eth0: 192.168.1.1/16|<eth2> eth2: 12.155.34.74"];
@@ -17,7 +17,7 @@ graph network {
   tcc [label="<t>Time Capsule C|<wifi> WiFi|<ether> Ethernet"];
 
   copper -- modem:copper
-  modem:eth1 -- router;
+  modem:eth1 -- router:eth1;
   router:eth2 -- weasel:eth2;
   weasel:eth0 -- weaselswitch;
   weaselswitch -- mainswitch;
