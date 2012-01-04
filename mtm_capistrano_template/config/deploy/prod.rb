@@ -4,7 +4,7 @@ set :deploy_to, "/var/www/sites/capistrano/#{application}"
 # The hostnames to deploy to.
 role :web, 'web12'
 
-set :gateway, '66.206.88.71'
+set :gateway, 'mgt2.copperfroghosting.com'
 
 # Specify one of the web servers to use for database backups or updates.
 # This server should also be running Drupal.
