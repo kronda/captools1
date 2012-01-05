@@ -120,6 +120,7 @@ end
 namespace :db do
   desc "Download a backup of the database(s) from the given stage."
   task :down, :roles => :db, :only => { :primary => true } do
+    run_locally "mkdir -p db"
     domains.each do |domain|
       filename = "#{domain}_#{stage}.sql"
       temp = "/tmp/#{release_name}_#{application}_#{filename}"
