@@ -117,9 +117,15 @@ drupal/sites/all/modules/imagemanager/logs
 drupal/sites/all/modules/filemanager/logs
 .buildpath
 .project
+.tmproj
 .settings
 db
 *~
+compass_app_log.txt
+.sass-cache
+compass_generated_stylesheets
+# compass generated sprites
+*-s[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].png
 .DS_Store" > .gitignore
 
 # Edit .htaccess to uncomment the line if you use VirtualDocumentRoot
