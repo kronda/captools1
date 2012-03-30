@@ -335,7 +335,7 @@ EOF;
     setup_git();
 
     // TODO: all the cap deploy setup stuff
-
+    mkdir("db");
 
     break;
   
