@@ -281,11 +281,6 @@ switch($project_type){
 
     system("drush dl " . implode(' ', $contrib[$project_type]));
 
-    // db stuff goes into URL
-    foreach($db as $i=>$v){
-      $db[$i] = urlencode($v);
-    }
-
     $local_settings=<<<EOF
 <?php
 $databases = array (
@@ -305,6 +300,12 @@ $databases = array (
 );
 EOF;
     file_put_contents('sites/default/local_settings.php', $local_settings);
+    
+    // db stuff goes into URL
+    foreach($db as $i=>$v){
+      $db[$i] = urlencode($v);
+    }
+
     system("drush site-install -y --db-url=mysql://{$db['root_user']}:{$db['root_password']}@localhost/{$db['database']} --account-name='$site_user' --account-pass='$site_pw' --account-mail='$account_email' --site-email='$site_email' --site-name='$site_name' '$site_profile'");    
     file_replace("# $conf\['allow_authorize_operations'\] = FALSE;", "# $conf\['allow_authorize_operations'\] = FALSE;\n\nif file_exists('local_settings.php') require_once('local_settings.php');", 'sites/default/default.settings.php', 'sites/default/settings.php');
 
