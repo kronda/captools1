@@ -66,7 +66,7 @@ EOF
   desc "Flush the Drupal cache system."
   task :cacheclear, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
-      run "#{drush} --uri=#{domain} cache-clear all"
+      run "#{drush} --uri=#{domain} registry-rebuild"
     end
   end
 
