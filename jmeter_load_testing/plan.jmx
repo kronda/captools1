@@ -38,7 +38,7 @@
       </ThreadGroup>
       <hashTree>
         <RunTime guiclass="RunTimeGui" testclass="RunTime" testname="Runtime Controller" enabled="true">
-          <stringProp name="RunTime.seconds">15</stringProp>
+          <stringProp name="RunTime.seconds">30</stringProp>
         </RunTime>
         <hashTree>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
