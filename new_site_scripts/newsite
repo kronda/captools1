@@ -1,9 +1,44 @@
 #!/usr/bin/php -q
 <?php
 /**
- * @fileInfo Build a new site from scratch, tracking it with metaltoad's git repo, using best practices
+ * @fileInfo Build a new site from scratch, tracking it with metaltoad's git repo, deploying with cap, using best practices
  */
 
+
+/**
+ * Basic HTTP requester
+ * @param  String  $method     HTTP method
+ * @param  String  $url        URL to request
+ * @param  Array   $data       query body (for PUT/POST)
+ * @param  boolean $debug      Output info about request?
+ * @return Array
+ */
+function request($method, $url, $data=False, $debug=False){
+  // Create a stream
+  $http_opts = array('http'=>array(
+      'method' => $method
+   ));
+
+  if ($data){
+    if (is_array($data)){
+      $http_opts['http']['content'] = json_encode($data);
+    }else{
+      $http_opts['http']['content'] = $data;
+    }
+  }
+
+  try{
+    $out = json_decode(@file_get_contents($url, false, stream_context_create($http_opts)), true);
+    if ($debug){
+      $headers = http_parse_headers(implode("\r\n",$http_response_header));
+      print "$method: $url\n";print_r($http_opts);print_r($headers);
+    }
+    return $out;
+  }catch(Exception $e){
+    print_r($e);
+    return FALSE;
+  }
+}
 
 /**
  * Prompt user for input
@@ -134,7 +169,21 @@ function setup_db($default){
  */
 function setup_git(){
   system("git init && git add -A && git commit -am 'Intitial commit'");
- // TODO: make remote github repo
+  $gh_user=prompt("What is your github username?", $_SERVER["USER"]);
+  $gh_pass=prompt("What is your github password");
+  $out = request('https://' + urlencode($gh_user) + ':' + urlencode($gh_pass) + '@api.github.com');
+  print_r($out);
+}
+
+/**
+ * Get Metal Toad cap stuff in place
+ */
+function setup_cap($project_dir){
+  chdir('/tmp/');
+  system('git clone git@github.com:metaltoad/mtm_tools.git');
+  chdir("mtm_tools");
+  copy("mtm_capistrano_template/Capfile", $project_dir."/Capfile");
+  recursive_copy("mtm_capistrano_template/config", $project_dir."config");
 }
 
 /**
@@ -249,16 +298,12 @@ switch($project_type){
     system('drush dl drupal  --default-major='.$version.' --destination="' . $project_name . '" --select');
     chdir($project_name);
     $project_dir = getcwd();
-
-    // get cap stuff
-    chdir('/tmp/');
-    system('git clone git@github.com:metaltoad/mtm_tools.git');
-    chdir("mtm_tools");
-    copy("mtm_capistrano_template/Capfile", $project_dir."/Capfile");
-    recursive_copy("mtm_capistrano_template/config", $project_dir."config");
+    
+    setup_cap($project_dir);
 
     // move stuff into a nice dir-structure
     chdir($project_dir);
+    mkdir("db");
     system("mv drupal-{$version}.* drupal && ln -s drupal webroot");
     chdir('drupal');
     mkdir('sites/all/modules/contrib');
@@ -333,10 +378,6 @@ EOF;
     .DS_Store");
 
     setup_git();
-
-    // TODO: all the cap deploy setup stuff
-    mkdir("db");
-
     break;
   
   // case 'wordpress':
