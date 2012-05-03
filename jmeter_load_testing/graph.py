@@ -109,6 +109,7 @@ for label in elapsed:
   fig.subplots_adjust(top=0.9, bottom=0.15, right=0.85, left=0.15)
 
   # Turn off scientific notation for Y axis
+  rcParams['axes.formatter.limits'] = [-20, 20]
   ax1.yaxis.set_major_formatter(ScalarFormatter(False))
 
   # Set the lower y limit to the match the first column
