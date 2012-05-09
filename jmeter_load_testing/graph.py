@@ -1,10 +1,16 @@
-#!/opt/local/bin/python2.6
+#!/usr/bin/env python
 
 from pylab import *
 import numpy as na
 import matplotlib.font_manager
 import csv
 import sys
+import argparse
+
+parser = argparse.ArgumentParser(description='Graph a JMeter test.')
+parser.add_argument("--title", default="", help="The graph title")
+parser.add_argument("input", metavar="input.csv", help="The CSV data", nargs='+')
+args = parser.parse_args()
 
 elapsed = {}
 timestamps = {}
@@ -12,7 +18,7 @@ starttimes = {}
 errors = {}
 
 # Parse the CSV files
-for file in sys.argv[1:]:
+for file in args.input:
   threads = int(file.split('-')[0])
   for row in csv.DictReader(open(file)):
     if (row['responseCode'] == '404'):
@@ -100,7 +106,7 @@ for label in elapsed:
   ax2.plot(throughput_data, 'o-', color=paleblue, linewidth=2, markersize=8)
 
   # Label the axis
-  ax1.set_title(label)
+  ax1.set_title(label + ' - ' + args.title)
   ax1.set_xlabel('Number of concurrent requests')
   ax2.set_ylabel('Requests per second')
   ax1.set_ylabel('Milliseconds')
