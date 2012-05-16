@@ -28,6 +28,13 @@ ssh_options[:user] = 'deploy'
 set :default_stage, "dev"
 set :stages, %w(dev staging prod)
 
+# Set the branch to the current stage, unless it's been overridden
+before 'multistage:ensure' do
+  if !exists?(:branch)
+    set :branch, stage
+  end
+end
+
 # Generally don't need sudo for this deploy setup
 set :use_sudo, false
 
