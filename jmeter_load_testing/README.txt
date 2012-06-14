@@ -7,6 +7,8 @@ This should create a file called urls.csv, that will look something like:
 www.example.com,/blog/fun-stakeoutrb
 www.example.com,/blog/unexpected-occurence-git-how-it-made-our-life-easier-time
 
+As an alternative, if the site lacks a functioning sitemap you can generate URLs by crawling:
+wget2csv.php http://example.com
 
 Step 2:
 ./run.sh
