@@ -46,6 +46,20 @@ sub vcl_recv {
     unset req.http.Cookie;
   }
 
+  if (req.request != "GET" &&
+    req.request != "HEAD" &&
+    req.request != "PUT" &&
+    req.request != "POST" &&
+    req.request != "TRACE" &&
+    req.request != "OPTIONS" &&
+    req.request != "DELETE") {
+      /* Non-RFC2616 or CONNECT which is weird. */
+      return (pipe);
+  }
+  if (req.request != "GET" && req.request != "HEAD") {
+      /* We only deal with GET and HEAD by default */
+      return (pass);
+  }
   if (req.http.Authorization || req.http.Cookie) {
     /* Not cacheable by default */
     return (pass);
