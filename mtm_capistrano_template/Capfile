@@ -67,6 +67,7 @@ EOF
   task :cacheclear, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
       run "#{drush} --uri=#{domain} registry-rebuild"
+      run "#{drush} --uri=#{domain} cache-clear all"
     end
   end
 
