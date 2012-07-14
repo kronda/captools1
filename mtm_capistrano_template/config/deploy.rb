@@ -12,6 +12,9 @@ set :repository,  "git@github.com:metaltoad/#{application}.git"
 # set :repository,  "https://svn.metaltoad.com/svn/#{application}/trunk/"
 # set(:scm_password) { Capistrano::CLI.password_prompt("SCM Password: ") }
 
+# E-mail address to notify of production deployments
+set :notify_email, "pm@metaltoad.com"
+
 # Set the database passwords that we'll use for maintenance. Probably only used
 # during setup.
 set(:db_root_pass) { Capistrano::CLI.password_prompt("Production Root MySQL password: ") }
@@ -28,10 +31,16 @@ ssh_options[:user] = 'deploy'
 set :default_stage, "dev"
 set :stages, %w(dev staging prod)
 
-# Set the branch to the current stage, unless it's been overridden
 before 'multistage:ensure' do
+  # Set the branch to the current stage, unless it's been overridden
   if !exists?(:branch)
     set :branch, stage
+  end
+
+  # Extra reminders for production.
+  if (stage == :prod)
+    before "deploy", "deploy:quality"
+    after "deploy", "deploy:notify"
   end
 end
 

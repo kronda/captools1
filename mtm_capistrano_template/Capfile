@@ -71,6 +71,27 @@ EOF
     end
   end
 
+  desc "Reminders for quality check"
+  task :quality do
+    puts "\n\n\033[41;30m  ************************ DANGER ZONE ************************  \033[0m\n"
+    puts "\033[41;30m  *\033[0m                                                          \033[41;30m *  \033[0m\n"
+    puts "\033[41;30m  *\033[0m \033[31m You're about to deploy to production servers.          \033[0m \033[41;30m *  \033[0m"
+    puts "\033[41;30m  *\033[0m \033[31m Please review http://metaltoad.com/deployment-policies \033[0m \033[41;30m *  \033[0m"
+    puts "\033[41;30m  *\033[0m                                                          \033[41;30m *  \033[0m\n"
+    puts "\033[41;30m  ************************ DANGER ZONE ************************  \033[0m\n\n"
+
+    if (Capistrano::CLI.ui.ask("Enter application name to continue: ") != application)
+      raise Capistrano::Error, "\n\n\033[43;30m Sorry, that's not the answer I was looking for. Deployment canceled.\033[0m\n\n"
+    end
+  end
+
+  desc "Send an e-mail notification"
+  task :notify, :roles => :db, :only => { :primary => true } do
+    username = run_locally 'whoami'
+    hostname = run_locally 'hostname'
+    run "printf To:#{notify_email}\\\\nSubject:Deployed\\ #{application}\\ to\\ #{stage}\\ by\\ #{username}@#{hostname}\\\\nThis\\ is\\ an\\ automated\\ message\\ from\\ Capistrano. | /usr/sbin/sendmail -t"
+  end
+
   namespace :web do
     desc "Set Drupal maintainance mode to online."
     task :enable do
@@ -116,6 +137,9 @@ EOF
   after "deploy",
     "deploy:cacheclear",
     "deploy:cleanup"
+
+  before "deploy:quality", "deploy:pending"
+
 end
 
 namespace :db do
