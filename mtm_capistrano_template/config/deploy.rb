@@ -4,6 +4,7 @@ set :application, "xxxxx"
 # List the Drupal multi-site folders.  Use "default" if no multi-sites are installed.
 # set :domains, ["example.metaltoad.com", "example2.metaltoad.com"]
 set :domains, ["default"]
+set :tables, "common"
 
 # Set the repository type and location to deploy from.
 set :scm, :git

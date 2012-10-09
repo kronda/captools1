@@ -147,10 +147,15 @@ namespace :db do
   task :down, :roles => :db, :only => { :primary => true } do
     run_locally "mkdir -p db"
     domains.each do |domain|
-      filename = "#{domain}_#{stage}.sql"
+      if (tables == "common")
+        filename = "#{domain}_#{stage}.sql"
+      else
+        filename = "#{domain}_#{stage}_#{tables}.sql"
+      end
+
       temp = "/tmp/#{release_name}_#{application}_#{filename}"
       run "touch #{temp} && chmod 600 #{temp}"
-      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=common > #{temp}"
+      run "#{drush} --uri=#{domain} sql-dump --structure-tables-key=#{tables} > #{temp}"
       download("#{temp}", "db/#{filename}", :via=> :scp)
       run "rm #{temp}"
     end
@@ -159,7 +164,12 @@ namespace :db do
   desc "Download and apply a backup of the database(s) from the given stage."
   task :pull, :roles => :db, :only => { :primary => true } do
     domains.each do |domain|
-      filename = "#{domain}_#{stage}.sql"
+      if (tables == "common")
+        filename = "#{domain}_#{stage}.sql"
+      else
+        filename = "#{domain}_#{stage}_#{tables}.sql"
+      end
+
       system "cd #{app_root} ; drush --uri=#{domain} sql-cli < ../db/#{filename}"
     end
   end
