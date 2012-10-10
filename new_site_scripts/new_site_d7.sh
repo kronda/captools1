@@ -12,6 +12,9 @@
 #
 # Additionally it requires you to have a Github account and have created a repository for your project
 
+# Stop on error
+set -e
+
 # Edit this line if you want to install on a machine other than mole
 # export machine='unicorn' # <sitename>.<machinename>.metaltoad.com
 
@@ -37,6 +40,15 @@ if [ ${#gitcontext} -lt 1 ]
     echo "Using $gitcontext as github context"
 fi
 
+read -p "What branch would you like to use (default: dev)?" branch
+
+# override a blank entry with the default
+if [ ${#branch} -lt 1 ]
+  then
+    branch="dev"
+    echo "Using $branch as default branch"
+fi
+
 echo "Enter your local MySQL superuser name and password (format: name pass) (default: root root)"
 read mysqlUser mysqlPass
 
@@ -51,6 +63,7 @@ fi
 mkdir $dbname
 cd $dbname
 git init
+git remote add origin git@github.com:$gitcontext/$dbname.git
 mkdir docs
 mkdir db
 # OR
@@ -141,8 +154,8 @@ echo "Removing default Drupal 7 .gitignore file"
 # Final commit
 git add .
 git commit -am "initial commit of drupal"
-git remote add origin git@github.com:$gitcontext/$dbname.git
-git push origin master
+git branch -m $branch
+git push origin $branch
 
 # Your local site is now ready for you to hit the /install.php Drupal file
 # From here down we're setting things up to deploy on Mole:
@@ -152,6 +165,9 @@ git push origin master
 git clone git@github.com:metaltoad/mtm_tools.git
 cp mtm_tools/mtm_capistrano_template/Capfile .
 cp -Rf mtm_tools/mtm_capistrano_template/config .
+# Add the drush files into the project
+cp -Rf mtm_tools/mtm_drush_template drupal/sites/all/drush
+# Cleanup
 rm -Rf mtm_tools
 
 # Modify the template to point to specific project
@@ -162,11 +178,19 @@ perl -pi -e "s/set :githubcontext, \"metaltoad\"/set :githubcontext, \"$gitconte
 git add Capfile
 git add config
 git commit -m "adding capistrano stuff"
-git push origin master
 
-# Deploy to mole
-cap deploy:setup
-cap deploy
+# Add the drush folder to git
+git add drupal/sites/all/drush
+git commit -m "adding drushrc.php"
+git push origin $branch
 
-# Install via the website/install.php
-open "http://$dbname-dev.metaltoad.com/install.php"
+read -p "Do you want to deploy to dev now? (y or n)" yn
+if [ "$yn" = "y" ]
+  then
+    # Deploy to mole
+    cap deploy:setup
+    cap deploy
+
+    # Install via the website/install.php
+    open "http://$dbname-dev.metaltoad.com/install.php"
+fi
