@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * @file
+ * MTM Update Text install.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function mtm_update_text_uninstall() {
+  // Remove replacement
+  $custom_strings = variable_get('locale_custom_strings_en', array());
+  
+  // Core and other modules use this variable so we only want to delete ours.
+  // It is an extra level in to support contexts.
+  unset($custom_strings['']['See the <a href="@available_updates">available updates</a> page for more information and to install your missing updates.']);
+  
+  if (empty($custom_strings[''])) {
+    unset($custom_strings['']);
+  }
+  
+  variable_set('locale_custom_strings_en', $custom_strings);
+}
+
+/**
+ * Implements hook_install().
+ */
+function mtm_update_text_install() {
+  // Set our the initial message.
+  $custom_strings = variable_get('locale_custom_strings_en', array());
+  
+  // Set one level in to support contexts.
+  $custom_strings['']['See the <a href="@available_updates">available updates</a> page for more information and to install your missing updates.'] =  "Please contact Metal Toad Media to inquire about available updates.";
+  variable_set('locale_custom_strings_en', $custom_strings);
+  
+  // Run the cron to make sure the text is updated right away.
+  // system_run_cron();
+}
