@@ -11,11 +11,11 @@
 function _mtm_update_text_strings() {
   // Key is the original text, value is what to swap it with.
   $strings = array(
-    // Drupal version needs secuirty update.
+    // Drupal version needs security update.
     'There is a security update available for your version of Drupal. To ensure the security of your server, you should update immediately!' => 'There is a security update available for your version of Drupal. To ensure the security of your server, you should update immediately!',
 
     // Modules need security update.
-    'There are security updates available for one or more of your modules or themes. To ensure the security of your server, you should update immediately!' => 'There are security updates available for one or more of your modules or themes. To ensure the security of your server, you should update immediately!',
+    'There are security updates available for one or more of your modules or themes. To ensure the security of your server, you should update immediately!' => 'There are security updates available for one or more of your modules or themes. To ensure the security of your server, you should update immediately! ',
 
     // Drupal updates for your version revoked.
     'Your version of Drupal has been revoked and is no longer available for download. Upgrading is strongly recommended!' => 'Your version of Drupal has been revoked and is no longer available for download. Upgrading is strongly recommended!',
@@ -30,10 +30,10 @@ function _mtm_update_text_strings() {
     'The installed version of at least one of your modules or themes is no longer supported. Upgrading or disabling is strongly recommended. See the project homepage for more details.' => 'The installed version of at least one of your modules or themes is no longer supported. Upgrading or disabling is strongly recommended. See the project homepage for more details.',
 
     // Drupal updates avail.
-    'There are updates available for your version of Drupal. To ensure the proper functioning of your site, you should update as soon as possible.' => 'There are updates available for your version of Drupal. To ensure the proper functioning of your site, you should update as soon as possible.',
+    'There are updates available for your version of Drupal. To ensure the proper functioning of your site, you should update as soon as possible.' => 'There are updates available for your version of Drupal. To ensure the proper functioning of your site, you should update as soon as possible. ',
 
     // Module updates avail.
-    'There are updates available for one or more of your modules or themes. To ensure the proper functioning of your site, you should update as soon as possible.' => 'There are updates available for one or more of your modules or themes. To ensure the proper functioning of your site, you should update as soon as possible.',
+    'There are updates available for one or more of your modules or themes. To ensure the proper functioning of your site, you should update as soon as possible.' => 'There are updates available for one or more of your modules or themes. To ensure the proper functioning of your site, you should update as soon as possible. ',
 
     // Drupal, problem checking updates.
     'There was a problem checking <a href="@update-report">available updates</a> for Drupal.' => 'There was a problem checking <a href="@update-report">available updates</a> for Drupal.',
@@ -42,10 +42,10 @@ function _mtm_update_text_strings() {
     'There was a problem checking <a href="@update-report">available updates</a> for your modules or themes.' => 'There was a problem checking <a href="@update-report">available updates</a> for your modules or themes.',
 
     // See the update page (appended to several update related warnings).
-    'See the <a href="@available_updates">available updates</a> page for more information.' => 'See the <a href="@available_updates">available updates</a> page for more information.',
+    'See the <a href="@available_updates">available updates</a> page for more information.' => 'See the <a href="@available_updates">available updates</a> page for more information. Contact your account manager at Metal Toad to schedule these updates as soon as possible at sales@metaltoad.com or (503) 336-1658.',
 
     // See the update page and install (appended to several update related warnings).
-    'See the <a href="@available_updates">available updates</a> page for more information and to install your missing updates.' => 'Please contact Metal Toad Media to inquire about available updates.',
+    'See the <a href="@available_updates">available updates</a> page for more information and to install your missing updates.' => 'Contact your account manager at Metal Toad to schedule these updates as soon as possible at sales@metaltoad.com or (503) 336-1658.',
   );
 
   return $strings;
