@@ -94,5 +94,5 @@ function mtm_update_text_install() {
   variable_set('locale_custom_strings_en', $custom_strings);
 
   // Run the cron to make sure the text is updated right away.
-  system_run_cron();
+  drupal_cron_run()();
 }
