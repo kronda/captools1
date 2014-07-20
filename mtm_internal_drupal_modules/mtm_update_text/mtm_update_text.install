@@ -1,0 +1,98 @@
+<?php
+
+/**
+ * @file
+ * MTM Update Text install.
+ */
+
+/**
+ * Builds and returns the list of strings to replace.
+ */
+function _mtm_update_text_strings() {
+  // Key is the original text, value is what to swap it with.
+  $strings = array(
+    // Drupal version needs security update.
+    'There is a security update available for your version of Drupal. To ensure the security of your server, you should update immediately!' => 'There is a security update available for your version of Drupal. To ensure the security of your server, you should update immediately!',
+
+    // Modules need security update.
+    'There are security updates available for one or more of your modules or themes. To ensure the security of your server, you should update immediately!' => 'There are security updates available for one or more of your modules or themes. To ensure the security of your server, you should update immediately! ',
+
+    // Drupal updates for your version revoked.
+    'Your version of Drupal has been revoked and is no longer available for download. Upgrading is strongly recommended!' => 'Your version of Drupal has been revoked and is no longer available for download. Upgrading is strongly recommended!',
+
+    // Module updates have been revoked.
+    'The installed version of at least one of your modules or themes has been revoked and is no longer available for download. Upgrading or disabling is strongly recommended!' => 'The installed version of at least one of your modules or themes has been revoked and is no longer available for download. Upgrading or disabling is strongly recommended!',
+
+    // Drupal version no longer supported.
+    'Your version of Drupal is no longer supported. Upgrading is strongly recommended!' => 'Your version of Drupal is no longer supported. Upgrading is strongly recommended!',
+
+    // Module version no longer supported.
+    'The installed version of at least one of your modules or themes is no longer supported. Upgrading or disabling is strongly recommended. See the project homepage for more details.' => 'The installed version of at least one of your modules or themes is no longer supported. Upgrading or disabling is strongly recommended. See the project homepage for more details.',
+
+    // Drupal updates avail.
+    'There are updates available for your version of Drupal. To ensure the proper functioning of your site, you should update as soon as possible.' => 'There are updates available for your version of Drupal. To ensure the proper functioning of your site, you should update as soon as possible. ',
+
+    // Module updates avail.
+    'There are updates available for one or more of your modules or themes. To ensure the proper functioning of your site, you should update as soon as possible.' => 'There are updates available for one or more of your modules or themes. To ensure the proper functioning of your site, you should update as soon as possible. ',
+
+    // Drupal, problem checking updates.
+    'There was a problem checking <a href="@update-report">available updates</a> for Drupal.' => 'There was a problem checking <a href="@update-report">available updates</a> for Drupal.',
+
+    // Modules, problem checking updates.
+    'There was a problem checking <a href="@update-report">available updates</a> for your modules or themes.' => 'There was a problem checking <a href="@update-report">available updates</a> for your modules or themes.',
+
+    // See the update page (appended to several update related warnings).
+    'See the <a href="@available_updates">available updates</a> page for more information.' => 'See the <a href="@available_updates">available updates</a> page for more information. Contact your account manager at Metal Toad to schedule these updates as soon as possible at sales@metaltoad.com or (503) 336-1658.',
+
+    // See the update page and install (appended to several update related warnings).
+    'See the <a href="@available_updates">available updates</a> page for more information and to install your missing updates.' => 'Contact your account manager at Metal Toad to schedule these updates as soon as possible at sales@metaltoad.com or (503) 336-1658.',
+  );
+
+  return $strings;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function mtm_update_text_uninstall() {
+  // Remove replacement
+  $custom_strings = variable_get('locale_custom_strings_en', array());
+
+  // Core and other modules use this variable so we only want to delete ours.
+  $strings = _mtm_update_text_strings();
+
+  if (!empty($strings)) {
+    foreach ($strings as $k => $v) {
+      // It is an extra level in to support contexts.
+      unset($custom_strings[''][$k]);
+    }
+  }
+
+  if (empty($custom_strings[''])) {
+    unset($custom_strings['']);
+  }
+
+  variable_set('locale_custom_strings_en', $custom_strings);
+}
+
+/**
+ * Implements hook_install().
+ */
+function mtm_update_text_install() {
+  // Set our the initial message.
+  $custom_strings = variable_get('locale_custom_strings_en', array());
+
+  $strings = _mtm_update_text_strings();
+
+  if (!empty($strings)) {
+    foreach ($strings as $k => $v) {
+      // Set one level in to support contexts.
+      $custom_strings[''][$k] = $v;
+    }
+  }
+
+  variable_set('locale_custom_strings_en', $custom_strings);
+
+  // Run the cron to make sure the text is updated right away.
+  drupal_cron_run()();
+}

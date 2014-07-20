@@ -1,0 +1,389 @@
+#!/usr/bin/php -q
+<?php
+/**
+ * @fileInfo Build a new site from scratch, tracking it with metaltoad's git repo, deploying with cap, using best practices
+ */
+
+
+/**
+ * Basic HTTP requester
+ * @param  String  $method     HTTP method
+ * @param  String  $url        URL to request
+ * @param  Array   $data       query body (for PUT/POST)
+ * @param  boolean $debug      Output info about request?
+ * @return Array
+ */
+function request($method, $url, $data=False, $debug=False){
+  // Create a stream
+  $http_opts = array('http'=>array(
+      'method' => $method
+   ));
+
+  if ($data){
+    if (is_array($data)){
+      $http_opts['http']['content'] = json_encode($data);
+    }else{
+      $http_opts['http']['content'] = $data;
+    }
+  }
+
+  try{
+    $out = json_decode(@file_get_contents($url, false, stream_context_create($http_opts)), true);
+    if ($debug){
+      $headers = http_parse_headers(implode("\r\n",$http_response_header));
+      print "$method: $url\n";print_r($http_opts);print_r($headers);
+    }
+    return $out;
+  }catch(Exception $e){
+    print_r($e);
+    return FALSE;
+  }
+}
+
+/**
+ * Prompt user for input
+ * @param  [String] $prompt       The prompt to get user input
+ * @param  [String] $default=NULL Optional default value
+ * @return [String]               default or user-input
+ */
+function prompt($prompt, $default=NULL, $options=NULL){
+  if (!empty($options)){
+    $prompt .= ' ['.implode(', ', $options).']';
+  }
+
+  if (!empty($default)){
+    $prompt .= " ($default)";
+  }
+  echo "$prompt : ";
+  $in = chop(fgets(STDIN));
+  
+  if (empty($in)){
+    $in = $default;
+  }
+
+  if (!empty($options)){
+    if (!in_array($in, $options)){
+      echo "Invalid input.\n";
+      return prompt($prompt, $default, $options);
+    }
+  }
+
+  return $in;
+}
+
+/**
+ * Generate a sensible password
+ * @param  integer $length=9   The length
+ * @param  integer $strength=0 More characters means more securities
+ * @return [String]            Your new fancy password
+ */
+function generatePasswordNew($length=9, $strength=7) {
+  $vowels = 'aeuy';
+  $consonants = 'bdghjmnpqrstvz';
+  if ($strength & 1) {
+    $consonants .= 'BDGHJLMNPQRSTVWXZ';
+  }
+  if ($strength & 2) {
+    $vowels .= "AEUY";
+  }
+  if ($strength & 4) {
+    $consonants .= '23456789';
+  }
+  if ($strength & 8) {
+    $consonants .= '@#$%';
+  }
+ 
+  $password = '';
+  $alt = time() % 2;
+  for ($i = 0; $i < $length; $i++) {
+    if ($alt == 1) {
+      $password .= $consonants[(rand() % strlen($consonants))];
+      $alt = 0;
+    } else {
+      $password .= $vowels[(rand() % strlen($vowels))];
+      $alt = 1;
+    }
+  }
+  return $password;
+}
+
+/**
+ * Setup user for database - used in  setup_db()
+ * @param  [type] &$info          Info about the database
+ * @param  [String] $project_name Name of project
+ */
+function setup_user(&$info, $project_name){
+  $dbh = new PDO("mysql:host=localhost", $info['user'], $info['password']);
+  $do=prompt("Do you want to create a project-specific user?", 'y', array('y','n'));
+  if ($do == 'y'){
+    $u = prompt("What is your project-specific username?", $project_name);
+    $pw = prompt("What is your project-specific password?", generatePassword());
+    try{
+      $dbh->exec("CREATE USER '$u'@'localhost' IDENTIFIED BY '$pw'; GRANT ALL ON `{$info['database']}`.* TO '$u'@'localhost';FLUSH PRIVILEGES;");
+      $info['user'] = $u;
+      $info['password'] = $pw;
+    }catch(PDOException $e){
+      echo "Could not create new user.\n";
+    }
+  }
+}
+
+/**
+ * Ask the questions needed to setup a database
+ * @param  [String]         $default Default name to use
+ * @return [Array]          db info
+ */
+function setup_db($default){
+  $info = array();
+  $info['database'] = prompt("What is the databases name?", $default);
+  $info['user'] = $info['root_user'] = prompt("What is your username?", 'root');
+  $info['password'] = $info['root_password'] = prompt("What is your password? (enter for none) ", '');
+    
+  // connect using these credentials
+  try{
+    setup_user($info, $default);
+    return $info;
+  }catch(PDOException $e){
+    switch($e->getCode()){
+      default:
+        echo $e->getMessage() . "\n";
+        break;
+      
+      case 1045:
+        echo "Access denied.\n";
+        break;
+      
+      case 1049:
+        setup_user($info, $default);
+        return $info;
+        break;
+
+    }
+    return setup_db($default);
+  } 
+}
+
+/**
+ * Init repo
+ * @return [type] [description]
+ */
+function setup_git(){
+  system("git init && git add -A && git commit -am 'Intitial commit'");
+  $gh_user=prompt("What is your github username?", $_SERVER["USER"]);
+  $gh_pass=prompt("What is your github password");
+  $out = request('https://' + urlencode($gh_user) + ':' + urlencode($gh_pass) + '@api.github.com');
+  print_r($out);
+}
+
+/**
+ * Get Metal Toad cap stuff in place
+ */
+function setup_cap($project_dir){
+  chdir('/tmp/');
+  system('git clone git@github.com:metaltoad/mtm_tools.git');
+  chdir("mtm_tools");
+  copy("mtm_capistrano_template/Capfile", $project_dir."/Capfile");
+  recursive_copy("mtm_capistrano_template/config", $project_dir."config");
+}
+
+/**
+ * Works exactly like preg-replace on a file
+ * @param  [mixed] $pattern      [description]
+ * @param  [mixed] $replacement  [description]
+ * @param  [String] $infile      file to read
+ * @param  [String] $outfile     (optional) file to output to
+ */
+function file_replace($pattern, $replacement, $infile, $outfile=NULL){
+  if (empty($outfile)){
+    $outfile = $infile;
+  }
+  file_put_contents($outfile, preg_replace($pattern, $replacement, file_get_contents($infile)));
+}
+
+/**
+ * recursively copy a directory
+ * @param  [String] $dirsource  dir to copy
+ * @param  [String] $dirdest    destination dir
+ */
+function recursive_copy($dirsource, $dirdest){
+  if (is_dir($dirsource)){ 
+    $dir_handle=opendir($dirsource);
+  }
+  $dirname = substr($dirsource,strrpos($dirsource,"/")+1);
+  mkdir($dirdest."/".$dirname, 0750);
+  while($file=readdir($dir_handle)) {
+    if ($file!="." && $file!="..") {
+      if(!is_dir($dirsource."/".$file)){
+        copy($dirsource."/".$file, $dirdest."/".$dirname."/".$file);
+      }else{
+        $dirdest1 = $dirdest."/".$dirname;
+        recursive_copy($dirsource."/".$file, $dirdest1);
+      }
+    }
+  }
+  closedir($dir_handle);
+  return true;
+}
+
+/**
+ * types of projects this script knows how to build
+ * @var array
+ */
+$project_types=array('drupal6', 'drupal7', 'wordpress');
+
+/**
+ * Contrib projects to be pre-installed
+ * @var array
+ */
+$contrib=array(
+  'drupal7' => array(
+    'admin_menu',
+    'advanced_help',
+    'block_class',
+    'chart',
+    'coder',
+    'comment_notify',
+    'ctools',
+    'devel',
+    'devel_themer',
+    'draggableviews',
+    'droptor',
+    'geshifilter',
+    'google_analytics',
+    'google_analytics_reports',
+    'ie6update',
+    'metatag',
+    'mollom',
+    'oauth',
+    'pathauto',
+    'redirect',
+    'scheduler',
+    'search404',
+    'securepages',
+    'sharethis',
+    'token',
+    'twitter',
+    'views',
+    'xmlsitemap'
+  )
+);
+
+echo <<<EOF
+This will jumpstart your new project. You will be asked a few questions,
+and this script will go and download the stuff that is needed and setup
+a local instance, all warm and pre-configured for you.
+
+Sometimes things take a while. Don't hit enter more than once on each question,
+just wait, and you will be rewarded with awesomeness.
+
+
+EOF;
+
+$project_type = prompt("What kind of project is this?", "drupal7", $project_types);
+while(empty($project_name)){
+  $project_name = prompt("What is the name of your project?");
+  ereg_replace("[^A-Za-z0-9_]", "", str_replace(' ', '_', $project_name) );
+}
+
+echo "Building a $project_type site named '$project_name'.\n";
+@mkdir($project_name);
+
+/*
+You can add more types here, and add them to $project_types, above.
+*/
+switch($project_type){
+  case 'drupal6':
+  case 'drupal7':
+    $version = substr($project_type, -1,1);
+    system('drush dl drupal  --default-major='.$version.' --destination="' . $project_name . '" --select');
+    chdir($project_name);
+    $project_dir = getcwd();
+    
+    setup_cap($project_dir);
+
+    // move stuff into a nice dir-structure
+    chdir($project_dir);
+    mkdir("db");
+    system("mv drupal-{$version}.* drupal && ln -s drupal webroot");
+    chdir('drupal');
+    mkdir('sites/all/modules/contrib');
+    mkdir('sites/all/modules/custom');
+    mkdir('sites/all/libraries');
+
+    $db = setup_db($project_name);
+
+    $site_name = prompt("What is the site name?", str_replace('_', ' ', ucfirst($project_name)));
+    $site_email = prompt("What is the site email?", $_SERVER["USER"] . "@metaltoad.com");
+    $site_user = prompt("What is the account #1 username?", "developer");
+    $site_pw = prompt("What is the account #1 password?", $db['password']);
+    $account_email = prompt("What is the account #1 email?", $site_email);
+
+    $dp = ($version==7) ? 'standard': 'default';
+    $site_profile = prompt("What install profile would you like to use? [eg: $dp, minimal, etc]", $dp);
+
+    // support for VirtualDocumentRoot
+    file_replace(' # RewriteBase /', 'RewriteBase /', '.htaccess');
+
+    system("drush dl " . implode(' ', $contrib[$project_type]));
+
+    $local_settings=<<<EOF
+<?php
+$databases = array (
+  'default' => 
+  array (
+    'default' => 
+    array (
+      'database' => '{$db['database']}',
+      'username' => '{$db['user']}',
+      'password' => '{$db['password']}',
+      'driver' => 'mysql',
+      'host' => 'localhost',
+      'port' => '',
+      'prefix' => '',
+    ),
+  ),
+);
+EOF;
+    file_put_contents('sites/default/local_settings.php', $local_settings);
+    
+    // db stuff goes into URL
+    foreach($db as $i=>$v){
+      $db[$i] = urlencode($v);
+    }
+
+    system("drush site-install -y --db-url=mysql://{$db['root_user']}:{$db['root_password']}@localhost/{$db['database']} --account-name='$site_user' --account-pass='$site_pw' --account-mail='$account_email' --site-email='$site_email' --site-name='$site_name' '$site_profile'");    
+    file_replace("# $conf\['allow_authorize_operations'\] = FALSE;", "# $conf\['allow_authorize_operations'\] = FALSE;\n\nif file_exists('local_settings.php') require_once('local_settings.php');", 'sites/default/default.settings.php', 'sites/default/settings.php');
+
+    chdir($project_dir);
+
+    # Add entries to .gitignore
+    file_put_contents('.gitignore', "drupal/sites/default/local_settings.php
+    drupal/sites/*/files
+    drupal/sites/*/private
+    drupal/sites/all/modules/imagemanager/logs
+    drupal/sites/all/modules/filemanager/logs
+    .buildpath
+    .project
+    .tmproj
+    .settings
+    *.sublime-*
+    *.
+    db
+    *~
+    compass_app_log.txt
+    .sass-cache
+    compass_generated_stylesheets
+    # compass generated sprites
+    *-s[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].png
+    .DS_Store");
+
+    setup_git();
+    break;
+  
+  // case 'wordpress':
+  //   break;
+
+  default:
+    echo "I do not know how to make that sort of project.\n";
+    break;
+}

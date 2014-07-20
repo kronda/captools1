@@ -1,5 +1,5 @@
 # Set the deployment directory on the target hosts.
-set :deploy_to, "/var/www/sites/capistrano/#{application}"
+set :deploy_to, "/var/www/sites/virtual/example.com"
 
 # The hostnames to deploy to.
 role :web, 'web12'

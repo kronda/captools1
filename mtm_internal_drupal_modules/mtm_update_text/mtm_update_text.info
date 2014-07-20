@@ -1,0 +1,5 @@
+name = MTM Update Text
+description = Alters the text displayed by the update module.
+core = 7.x
+files[] = mtm_update_text.module
+files[] = mtm_update_text.install
